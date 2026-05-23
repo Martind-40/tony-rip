@@ -61,3 +61,18 @@ Runtime Readiness changes are prepared locally for review. No commit or push per
 ## Recommended Next Step
 
 Private Mode Execution Gate. The Chief must explicitly approve any move from DRY_RUN to real local execution.
+
+## High Power Controlled Continuity
+
+The Local Command Bridge design has been elevated to High Power Controlled preparation.
+
+Added:
+
+- High power controlled policy.
+- High power command matrix.
+- Approval protocol.
+- Runtime runner template.
+- Stronger policy guard checks.
+- UI simulation for high power requests.
+
+This does not activate real execution and does not change the official runtime mode. ULTRON remains `DRY_RUN_ONLY` with `real_execution_enabled` set to `false`.

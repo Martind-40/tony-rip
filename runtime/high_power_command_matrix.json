@@ -1,0 +1,87 @@
+{
+  "matrix_status": "HIGH_POWER_CONTROLLED_READY_PREPARED",
+  "real_execution_enabled": false,
+  "allowed_read_commands_future": [
+    "pwd",
+    "ls",
+    "find",
+    "cat",
+    "head",
+    "tail",
+    "wc",
+    "grep",
+    "sed read-only usage",
+    "git status",
+    "git log",
+    "git diff",
+    "git diff --stat"
+  ],
+  "allowed_validation_commands_future": [
+    "npm run build",
+    "npm test",
+    "npm run lint",
+    "node --check",
+    "python --version",
+    "node --version",
+    "npm --version"
+  ],
+  "allowed_project_write_commands_future": [
+    {
+      "action": "create file inside /Users/macbook/ultron",
+      "requires": "CHIEF_APPROVAL"
+    },
+    {
+      "action": "edit file inside /Users/macbook/ultron",
+      "requires": "CHIEF_APPROVAL"
+    },
+    {
+      "action": "create folder inside /Users/macbook/ultron",
+      "requires": "CHIEF_APPROVAL"
+    },
+    {
+      "action": "generate report .md inside docs/",
+      "requires": "CHIEF_APPROVAL"
+    },
+    {
+      "action": "generate log inside runtime/",
+      "requires": "CHIEF_APPROVAL"
+    },
+    {
+      "action": "prepare git add",
+      "requires": "CHIEF_DOUBLE_APPROVAL"
+    },
+    {
+      "action": "prepare git commit local",
+      "requires": "CHIEF_DOUBLE_APPROVAL"
+    }
+  ],
+  "requires_double_confirmation": [
+    "git add",
+    "git commit",
+    "bulk file edits",
+    "changes in runtime_config.json",
+    "changes in runtime_policy_guard.js",
+    "changes in Local Command Bridge",
+    "activate any mode different from DRY_RUN_ONLY"
+  ],
+  "blocked_always": [
+    "sudo",
+    "rm -rf",
+    "chmod",
+    "chown",
+    "git reset --hard",
+    "git push",
+    "curl",
+    "wget",
+    "npm install",
+    "ssh",
+    "scp",
+    "rsync",
+    "open external network",
+    "read .env",
+    "read .ssh",
+    "read private keys",
+    "read credentials",
+    "access outside /Users/macbook/ultron"
+  ]
+}

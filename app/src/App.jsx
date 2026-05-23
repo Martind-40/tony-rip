@@ -450,6 +450,70 @@ const runtimeActions = [
   }
 ];
 
+const highPowerStatusRows = [
+  { label: "High Power Mode", value: "PREPARED" },
+  { label: "Real Execution", value: "DISABLED" },
+  { label: "Chief Confirmation", value: "REQUIRED" },
+  { label: "Double Confirmation", value: "REQUIRED FOR SENSITIVE ACTIONS" },
+  { label: "Project Scope", value: "ULTRON ONLY" },
+  { label: "External Projects", value: "BLOCKED" },
+  { label: "Secrets", value: "BLOCKED" },
+  { label: "Network", value: "BLOCKED" },
+  { label: "Git Push", value: "BLOCKED" },
+  { label: "Project Writes", value: "FUTURE / APPROVAL REQUIRED" },
+  { label: "Local Commits", value: "FUTURE / DOUBLE CONFIRMATION REQUIRED" }
+];
+
+const highPowerActions = [
+  {
+    name: "Simulate High Power Read",
+    status: "HIGH_POWER_READ_PREPARED",
+    risk: "LOW",
+    result:
+      "Future project read request prepared inside ULTRON scope. No command was executed."
+  },
+  {
+    name: "Simulate Project Write Request",
+    status: "APPROVAL_REQUIRED",
+    risk: "MEDIUM",
+    result:
+      "Project write request requires Chief confirmation, command log and rollback plan."
+  },
+  {
+    name: "Simulate Double Confirmation",
+    status: "DOUBLE_CONFIRMATION_REQUIRED",
+    risk: "MEDIUM",
+    result:
+      "Sensitive action requires CHIEF_DOUBLE_APPROVES_HIGH_RISK_COMMAND format."
+  },
+  {
+    name: "Simulate Secret Block",
+    status: "BLOCKED_SECRET_ACCESS",
+    risk: "HIGH",
+    result: "Secret-like targets remain blocked by high power policy."
+  },
+  {
+    name: "Simulate External Path Block",
+    status: "BLOCKED_EXTERNAL_PATH",
+    risk: "HIGH",
+    result:
+      "External project access blocked. Scope is locked to /Users/macbook/ultron."
+  },
+  {
+    name: "Simulate Git Push Block",
+    status: "BLOCKED_BY_POLICY",
+    risk: "HIGH",
+    result: "Git push remains blocked. Publishing requires separate Chief approval."
+  },
+  {
+    name: "Simulate Rollback Requirement",
+    status: "ROLLBACK_REQUIRED",
+    risk: "MEDIUM",
+    result:
+      "Any future write action must include rollback notes before execution review."
+  }
+];
+
 const modelRouterRows = [
   { model: "Local/free model", status: "READY_FOR_DESIGN" },
   { model: "OpenAI", status: "AVAILABLE_LATER" },
@@ -670,6 +734,20 @@ function App() {
   function handleRuntimeAction(action) {
     const entry = {
       id: createId("RUN"),
+      action: action.name,
+      status: action.status,
+      timestamp: new Date().toLocaleString(),
+      result: action.result,
+      risk: action.risk
+    };
+
+    setLastOperatorResult(action.result);
+    setOperatorActions((current) => [entry, ...current].slice(0, 12));
+  }
+
+  function handleHighPowerAction(action) {
+    const entry = {
+      id: createId("HP"),
       action: action.name,
       status: action.status,
       timestamp: new Date().toLocaleString(),
@@ -929,6 +1007,46 @@ function App() {
             <p className="warningText">
               DRY_RUN only. No terminal command, network call, secret access or
               autonomous loop is active.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section className="highPowerPanel" aria-labelledby="high-power-bridge">
+        <div className="sectionIntro">
+          <p className="eyebrow">ADVANCED PREP / CONTROLLED POWER</p>
+          <h2 id="high-power-bridge">High Power Controlled Bridge</h2>
+          <p>
+            Future-ready local operations layer for stronger project reads,
+            validations, controlled writes and local commit preparation. Real
+            execution is still disabled.
+          </p>
+        </div>
+
+        <div className="highPowerGrid">
+          <article className="operatorCoreCard">
+            <h3>High Power Guardrails</h3>
+            <StatusList items={highPowerStatusRows} />
+          </article>
+
+          <article className="operatorCoreCard highPowerActionCard">
+            <h3>Simulated High Power Requests</h3>
+            <div className="highPowerActionGrid">
+              {highPowerActions.map((action) => (
+                <button
+                  type="button"
+                  key={action.name}
+                  onClick={() => handleHighPowerAction(action)}
+                >
+                  <span>{action.name}</span>
+                  <strong>{action.status}</strong>
+                  <small>Risk: {action.risk}</small>
+                </button>
+              ))}
+            </div>
+            <p className="warningText">
+              High power is prepared, not active. No button executes terminal
+              commands, reads secrets, touches external projects or pushes git.
             </p>
           </article>
         </div>

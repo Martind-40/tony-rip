@@ -1,0 +1,22 @@
+{
+  "mode": "HIGH_POWER_CONTROLLED_READY",
+  "real_execution_enabled": false,
+  "chief_confirmation_required": true,
+  "autonomous_execution": false,
+  "working_directory_lock": "/Users/macbook/ultron",
+  "allowed_scope": "ULTRON_PROJECT_ONLY",
+  "read_project_files_allowed_future": true,
+  "write_project_files_allowed_future": true,
+  "prepare_local_commits_allowed_future": true,
+  "git_push_allowed": false,
+  "network_access_allowed": false,
+  "secrets_access_allowed": false,
+  "destructive_commands_allowed": false,
+  "external_projects_access_allowed": false,
+  "max_timeout_ms": 15000,
+  "max_output_chars": 8000,
+  "requires_policy_guard": true,
+  "requires_approval_queue": true,
+  "requires_command_log": true,
+  "requires_rollback_plan": true
+}

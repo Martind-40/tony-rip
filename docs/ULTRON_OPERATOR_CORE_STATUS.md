@@ -91,6 +91,37 @@ Still disabled:
 
 Private Mode and explicit Chief approval are required before any future execution gate can open.
 
+## High Power Controlled Bridge Status
+
+HIGH_POWER_CONTROLLED_READY PREPARED / REAL_EXECUTION_DISABLED.
+
+Prepared:
+
+- Future project file reads inside ULTRON.
+- Future controlled project writes inside ULTRON.
+- Future validation commands.
+- Future local report generation.
+- Future local commit preparation.
+- Stronger policy checks for protected paths, secrets, network commands and destructive commands.
+
+Required:
+
+- Chief confirmation for every real action.
+- Double confirmation for sensitive actions.
+- Command log.
+- Result summary.
+- Rollback plan for write actions.
+
+Still blocked:
+
+- Real execution.
+- External projects.
+- AetherMind, Coco Venture and AetherColony.
+- Secrets.
+- Network access.
+- Git push.
+- Autonomous execution.
+
 ## Autonomy Status
 
 BLOCKED.

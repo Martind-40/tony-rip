@@ -23,6 +23,7 @@ const PERMISSION_LEVELS = [
 
 const BLOCKED_KEYWORDS = [
   "rm",
+  "rm -rf",
   "sudo",
   "chmod",
   "chown",
@@ -30,20 +31,56 @@ const BLOCKED_KEYWORDS = [
   "git push",
   "curl",
   "wget",
-  "npm install"
+  "npm install",
+  "ssh",
+  "scp",
+  "rsync"
 ];
 
 const SECRET_PATTERNS = [
   ".env",
+  ".ssh",
+  "id_rsa",
+  "id_ed25519",
+  ".pem",
+  "private_key",
+  "api_key",
+  "apikey",
+  "key",
   "secret",
   "secrets",
   "credential",
   "credentials",
   "token",
-  "api_key",
-  "apikey",
-  "private_key",
-  ".ssh"
+  "password"
+];
+
+const DANGEROUS_PIPE_TARGETS = [
+  "sudo",
+  "rm",
+  "chmod",
+  "chown",
+  "curl",
+  "wget",
+  "ssh",
+  "scp",
+  "rsync",
+  "npm install",
+  "git push",
+  "git reset --hard"
+];
+
+const CHAIN_OPERATORS = ["&&", "||", ";", "$(", "`"];
+
+const DOUBLE_CONFIRMATION_PATTERNS = [
+  "git add",
+  "git commit",
+  "runtime_config.json",
+  "runtime_policy_guard.js",
+  "local_command_bridge",
+  "safe_commands.allowlist",
+  "high_power",
+  "DRY_RUN_ONLY"
 ];
 
 function normalizeCommand(command) {
@@ -59,12 +96,21 @@ function hasBlockedKeyword(command) {
   return BLOCKED_KEYWORDS.some((keyword) => normalized.includes(keyword));
 }
 
+function isInsideUltronPath(workingDirectory) {
+  const target = normalizePath(workingDirectory);
+  const ultronRoot = normalizePath("/Users/macbook/ultron");
+  return target === ultronRoot || target.startsWith(`${ultronRoot}${path.sep}`);
+}
+
 function isDestructiveCommand(command) {
   const normalized = normalizeCommand(command);
   return (
+    normalized.includes("rm -rf") ||
     normalized.includes("rm ") ||
     normalized === "rm" ||
     normalized.includes("git reset --hard") ||
+    normalized.includes("git push") ||
+    normalized.includes("sudo") ||
     normalized.includes("chmod") ||
     normalized.includes("chown") ||
     normalized.includes(">") ||
@@ -77,6 +123,9 @@ function isExternalNetworkCommand(command) {
   return (
     normalized.includes("curl") ||
     normalized.includes("wget") ||
+    normalized.includes("ssh ") ||
+    normalized.includes("scp ") ||
+    normalized.includes("rsync ") ||
     normalized.includes("http://") ||
     normalized.includes("https://") ||
     normalized.includes("npm install")
@@ -86,6 +135,44 @@ function isExternalNetworkCommand(command) {
 function isSecretAccess(command) {
   const normalized = normalizeCommand(command);
   return SECRET_PATTERNS.some((pattern) => normalized.includes(pattern));
+}
+
+function hasUnsafeRedirection(command) {
+  const normalized = normalizeCommand(command);
+  if (!normalized.includes(">")) {
+    return false;
+  }
+
+  return (
+    normalized.includes("/users/macbook/aethermind") ||
+    normalized.includes("/users/macbook/.") ||
+    normalized.includes("../") ||
+    isSecretAccess(normalized)
+  );
+}
+
+function hasDangerousPipe(command) {
+  const normalized = normalizeCommand(command);
+  if (!normalized.includes("|")) {
+    return false;
+  }
+
+  return DANGEROUS_PIPE_TARGETS.some((target) => normalized.includes(`| ${target}`));
+}
+
+function hasUnvalidatedCommandChain(command) {
+  const normalized = normalizeCommand(command);
+  return CHAIN_OPERATORS.some((operator) => normalized.includes(operator));
+}
+
+function requiresDoubleConfirmation(command) {
+  const normalized = String(command || "");
+  const lowered = normalized.toLowerCase();
+  return DOUBLE_CONFIRMATION_PATTERNS.some((pattern) =>
+    pattern === "DRY_RUN_ONLY"
+      ? normalized.includes(pattern)
+      : lowered.includes(pattern.toLowerCase())
+  );
 }
 
 function isProtectedPath(workingDirectory, protectedPaths = []) {
@@ -129,11 +216,27 @@ function validateRuntimeCommand(commandRecord, policy = {}, runtimeConfig = {}) 
     };
   }
 
+  if (!isInsideUltronPath(commandRecord.working_directory)) {
+    return {
+      status: RUNTIME_STATES.BLOCKED_PROTECTED_PATH,
+      risk: "HIGH",
+      reason: "Working directory must stay inside /Users/macbook/ultron."
+    };
+  }
+
   if (hasBlockedKeyword(commandRecord.command)) {
     return {
       status: RUNTIME_STATES.BLOCKED_DESTRUCTIVE_COMMAND,
       risk: "HIGH",
       reason: "Command contains a blocked keyword."
+    };
+  }
+
+  if (isDestructiveCommand(commandRecord.command)) {
+    return {
+      status: RUNTIME_STATES.BLOCKED_DESTRUCTIVE_COMMAND,
+      risk: "HIGH",
+      reason: "Command is destructive or mutates protected execution state."
     };
   }
 
@@ -150,6 +253,30 @@ function validateRuntimeCommand(commandRecord, policy = {}, runtimeConfig = {}) 
       status: RUNTIME_STATES.BLOCKED_SECRET_ACCESS,
       risk: "HIGH",
       reason: "Command attempts to access secrets or secret-like paths."
+    };
+  }
+
+  if (hasUnsafeRedirection(commandRecord.command)) {
+    return {
+      status: RUNTIME_STATES.BLOCKED_PROTECTED_PATH,
+      risk: "HIGH",
+      reason: "Unsafe redirection toward protected or secret-like paths is blocked."
+    };
+  }
+
+  if (hasDangerousPipe(commandRecord.command)) {
+    return {
+      status: RUNTIME_STATES.BLOCKED_BY_POLICY,
+      risk: "HIGH",
+      reason: "Pipe into dangerous command is blocked."
+    };
+  }
+
+  if (hasUnvalidatedCommandChain(commandRecord.command)) {
+    return {
+      status: RUNTIME_STATES.APPROVAL_REQUIRED,
+      risk: "MEDIUM",
+      reason: "Chained command requires explicit validation before future execution."
     };
   }
 
@@ -180,7 +307,10 @@ function validateRuntimeCommand(commandRecord, policy = {}, runtimeConfig = {}) 
   return {
     status: RUNTIME_STATES.VALIDATION_PASS,
     risk: commandRecord.risk_level || "LOW",
-    reason: "Command passed DRY_RUN validation. Real execution remains disabled."
+    reason: requiresDoubleConfirmation(commandRecord.command)
+      ? "Command passed DRY_RUN validation but requires double confirmation for future execution."
+      : "Command passed DRY_RUN validation. Real execution remains disabled.",
+    requiresDoubleConfirmation: requiresDoubleConfirmation(commandRecord.command)
   };
 }
 
@@ -190,9 +320,14 @@ module.exports = {
   BLOCKED_KEYWORDS,
   SECRET_PATTERNS,
   hasBlockedKeyword,
+  isInsideUltronPath,
   isDestructiveCommand,
   isExternalNetworkCommand,
   isSecretAccess,
+  hasUnsafeRedirection,
+  hasDangerousPipe,
+  hasUnvalidatedCommandChain,
+  requiresDoubleConfirmation,
   isProtectedPath,
   isAllowedPath,
   validateRuntimeCommand

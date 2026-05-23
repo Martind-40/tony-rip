@@ -501,6 +501,62 @@ h1 {
   font-size: 0.78rem;
 }
 
+.highPowerPanel {
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid #84654c;
+  border-radius: 8px;
+  background: #171109;
+}
+
+.highPowerGrid {
+  display: grid;
+  grid-template-columns: 0.95fr 1.45fr;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.highPowerActionCard {
+  min-height: 340px;
+}
+
+.highPowerActionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.highPowerActionGrid button {
+  display: grid;
+  gap: 7px;
+  min-height: 96px;
+  padding: 12px;
+  border: 1px solid #67523d;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #21170e;
+  cursor: pointer;
+  text-align: left;
+}
+
+.highPowerActionGrid button:hover {
+  border-color: #ffca7a;
+}
+
+.highPowerActionGrid span {
+  font-weight: 900;
+}
+
+.highPowerActionGrid strong {
+  color: #ffca7a;
+  font-size: 0.76rem;
+}
+
+.highPowerActionGrid small {
+  color: #9fb2bf;
+  font-size: 0.78rem;
+}
+
 .actionableOperator {
   margin: 18px 0;
   padding: 18px;
@@ -1125,9 +1181,11 @@ h2 {
   .operatorCoreGrid,
   .localBridgeGrid,
   .runtimeReadinessGrid,
+  .highPowerGrid,
   .safeCommandGrid,
   .bridgeCommandGrid,
   .runtimeActionGrid,
+  .highPowerActionGrid,
   .operatorModules,
   .operatorForm,
   .counterGrid,
