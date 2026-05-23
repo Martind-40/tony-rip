@@ -66,6 +66,31 @@ Prepared:
 
 No command executes from the UI.
 
+## Operator Runtime Readiness Status
+
+DRY_RUN_READY.
+
+Prepared:
+
+- Runtime config.
+- Runtime policy guard.
+- DRY_RUN bridge runner.
+- Allowlist validation.
+- Permission validation.
+- Protected path validation.
+- Blocked command validation.
+- Runtime UI actions in the existing Action Log.
+
+Still disabled:
+
+- Real terminal execution.
+- External network calls.
+- Secret access.
+- Destructive commands.
+- Autonomous loops.
+
+Private Mode and explicit Chief approval are required before any future execution gate can open.
+
 ## Autonomy Status
 
 BLOCKED.

@@ -394,6 +394,62 @@ const bridgeBlockedCommands = [
   "write outside project"
 ];
 
+const runtimeStatusRows = [
+  { label: "Runtime Status", value: "DRY_RUN_READY" },
+  { label: "Real Execution", value: "DISABLED" },
+  { label: "Private Mode Required", value: "YES" },
+  { label: "Chief Approval Required", value: "YES" },
+  { label: "Allowlist Validation", value: "READY" },
+  { label: "Policy Guard", value: "READY" },
+  { label: "Protected Paths", value: "ENABLED" },
+  { label: "Destructive Commands", value: "BLOCKED" },
+  { label: "External Network", value: "BLOCKED" },
+  { label: "Secret Access", value: "BLOCKED" },
+  { label: "Autonomous Loop", value: "BLOCKED" }
+];
+
+const runtimeActions = [
+  {
+    name: "Validate Runtime Policy",
+    status: "VALIDATION_PASS",
+    risk: "LOW",
+    result: "Runtime policy guard is ready. Real execution remains disabled."
+  },
+  {
+    name: "Validate Safe Allowlist",
+    status: "VALIDATION_PASS",
+    risk: "LOW",
+    result:
+      "Safe command allowlist is loaded for future private execution review."
+  },
+  {
+    name: "Simulate Runtime Request",
+    status: "DRY_RUN_READY",
+    risk: "LOW",
+    result: "Runtime request simulated. No command was executed."
+  },
+  {
+    name: "Test Blocked Command",
+    status: "BLOCKED_BY_POLICY",
+    risk: "HIGH",
+    result: "Destructive or unauthorized command blocked by runtime policy."
+  },
+  {
+    name: "Test Protected Path",
+    status: "BLOCKED_PROTECTED_PATH",
+    risk: "HIGH",
+    result:
+      "Protected path access blocked. ULTRON may only operate inside approved project scope."
+  },
+  {
+    name: "Prepare Private Mode Review",
+    status: "APPROVAL_REQUIRED",
+    risk: "MEDIUM",
+    result:
+      "Private Mode review package is ready for Chief decision. Real execution is still disabled."
+  }
+];
+
 const modelRouterRows = [
   { model: "Local/free model", status: "READY_FOR_DESIGN" },
   { model: "OpenAI", status: "AVAILABLE_LATER" },
@@ -611,6 +667,20 @@ function App() {
     setOperatorActions((current) => [entry, ...current].slice(0, 12));
   }
 
+  function handleRuntimeAction(action) {
+    const entry = {
+      id: createId("RUN"),
+      action: action.name,
+      status: action.status,
+      timestamp: new Date().toLocaleString(),
+      result: action.result,
+      risk: action.risk
+    };
+
+    setLastOperatorResult(action.result);
+    setOperatorActions((current) => [entry, ...current].slice(0, 12));
+  }
+
   return (
     <main className="appShell">
       <header className="terminalBar" aria-label="Operator terminal header">
@@ -817,6 +887,48 @@ function App() {
             </div>
             <p className="warningText">
               Blocked by safety policy. Status: BLOCKED. Risk: HIGH.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section
+        className="runtimeReadinessPanel"
+        aria-labelledby="runtime-readiness"
+      >
+        <div className="sectionIntro">
+          <p className="eyebrow">DRY RUN / RUNTIME READINESS</p>
+          <h2 id="runtime-readiness">Operator Runtime Readiness</h2>
+          <p>
+            Validation layer for future safe command execution. Runtime checks
+            are ready, but real terminal execution remains disabled.
+          </p>
+        </div>
+
+        <div className="runtimeReadinessGrid">
+          <article className="operatorCoreCard">
+            <h3>Runtime Guard State</h3>
+            <StatusList items={runtimeStatusRows} />
+          </article>
+
+          <article className="operatorCoreCard runtimeActionCard">
+            <h3>Runtime Validation Actions</h3>
+            <div className="runtimeActionGrid">
+              {runtimeActions.map((action) => (
+                <button
+                  type="button"
+                  key={action.name}
+                  onClick={() => handleRuntimeAction(action)}
+                >
+                  <span>{action.name}</span>
+                  <strong>{action.status}</strong>
+                  <small>Risk: {action.risk}</small>
+                </button>
+              ))}
+            </div>
+            <p className="warningText">
+              DRY_RUN only. No terminal command, network call, secret access or
+              autonomous loop is active.
             </p>
           </article>
         </div>

@@ -442,6 +442,42 @@ Still disabled:
 
 ---
 
+## Operator Runtime Readiness
+
+Status: DRY_RUN_READY
+
+Document created: `docs/ULTRON_RUNTIME_READINESS_CLOSEOUT.md`
+
+Runtime layer is DRY_RUN_READY. Real execution is disabled.
+
+Prepared:
+
+- Runtime policy guard.
+- Safe command allowlist validation.
+- Permission validation.
+- Protected path checks.
+- Blocked command detection.
+- Runtime config for DRY_RUN only.
+- UI runtime validation actions connected to Action Log.
+
+Still required before real terminal execution:
+
+- Private Mode.
+- Explicit Chief approval.
+- Reviewed execution gate.
+- Action logging.
+- Rollback plan for any future write action.
+
+Still blocked:
+
+- Destructive commands.
+- Secret access.
+- External network calls.
+- Autonomous loops.
+- Real terminal execution from the UI.
+
+---
+
 ## Operating Mode
 
 Default mode:
@@ -496,6 +532,8 @@ ULTRON Functional MVP: ready for review.
 
 Local Command Bridge: policy-ready, execution disabled.
 
+Operator Runtime Readiness: DRY_RUN_READY, real execution disabled.
+
 Technical posture: lightweight, local-first, frontend-functional.
 
-Next milestone: approve or reject real local command bridge design.
+Next milestone: Private Mode Execution Gate review.
