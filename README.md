@@ -283,6 +283,20 @@ Recommended next sprint: Sprint 13 — Local-Only Private Memory Prototype.
 
 ---
 
+## Sprint 13 — Local-Only Private Memory Prototype
+
+Status: COMPLETED / MOCK_PROTOTYPE_READY
+
+Document created: `docs/SPRINT_13_LOCAL_ONLY_PRIVATE_MEMORY_PROTOTYPE.md`
+
+Sprint 13 adds a local-only mock prototype for private memory structure. It uses mock records, mock classification, mock approval status and mock audit log language only.
+
+Limits remain unchanged: no real data, no backend, no auth, no APIs, no cloud, no real private memory and no autonomous agents.
+
+Recommended next sprint: Sprint 14 — Approval Queue Prototype.
+
+---
+
 ## Operating Mode
 
 Default mode:
@@ -323,8 +337,10 @@ Sprint 10 public demo presentation pack: complete.
 
 Sprint 11 feedback capture and demo iteration: complete.
 
-Sprint 12 private architecture blueprint: ready for commit.
+Sprint 12 private architecture blueprint: complete.
+
+Sprint 13 local-only private memory prototype: ready for commit.
 
 Technical posture: lightweight, local-first, documentation-first.
 
-Next milestone: local-only private memory prototype.
+Next milestone: approval queue prototype.

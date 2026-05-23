@@ -66,6 +66,37 @@ const architectureStatus = [
   { label: "Real Data", value: "NOT_CONNECTED" }
 ];
 
+const localMemoryStatus = [
+  { label: "Memory mode", value: "MOCK_ONLY" },
+  { label: "Storage", value: "NOT_IMPLEMENTED" },
+  { label: "Raw data", value: "NOT_STORED" },
+  { label: "Approval", value: "HUMAN_REVIEW_REQUIRED" },
+  { label: "Backend", value: "NOT_CONNECTED" },
+  { label: "APIs", value: "NOT_CONNECTED" },
+  { label: "Agents", value: "BLOCKED" }
+];
+
+const mockMemoryItems = [
+  {
+    item: "MEM-001",
+    classification: "pure_knowledge",
+    approval: "APPROVED_MOCK",
+    storage: "MOCK_ONLY"
+  },
+  {
+    item: "MEM-002",
+    classification: "product_learning",
+    approval: "STORED_AS_KNOWLEDGE_MOCK",
+    storage: "MOCK_ONLY"
+  },
+  {
+    item: "MEM-003",
+    classification: "blocked_sensitive",
+    approval: "BLOCKED_MOCK",
+    storage: "NOT_STORED"
+  }
+];
+
 const approvalGate = [
   "Every sensitive action requires approval",
   "No autonomous execution",
@@ -350,6 +381,32 @@ function App() {
               </article>
             ))}
           </div>
+        </div>
+
+        <div className="memoryPrototype">
+          <h3>Local-Only Private Memory Prototype</h3>
+          <StatusList items={localMemoryStatus} />
+          <div className="mockTable" aria-label="Mock private memory records">
+            <div className="mockTableHeader">
+              <span>Memory Item</span>
+              <span>Classification</span>
+              <span>Approval</span>
+              <span>Storage</span>
+            </div>
+            {mockMemoryItems.map((item) => (
+              <div className="mockTableRow" key={item.item}>
+                <strong>{item.item}</strong>
+                <span>{item.classification}</span>
+                <span>{item.approval}</span>
+                <span>{item.storage}</span>
+              </div>
+            ))}
+          </div>
+          <p className="memoryPrototypeNote">
+            This is a local-only memory prototype using mock data. No real
+            private data, credentials, backend, authentication, APIs, cloud
+            storage, or autonomous agents are connected.
+          </p>
         </div>
       </section>
     </main>

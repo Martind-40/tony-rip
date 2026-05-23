@@ -420,11 +420,73 @@ h2 {
   font-size: 0.88rem;
 }
 
+.memoryPrototype {
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid #2f4250;
+  border-radius: 8px;
+  background: #101820;
+}
+
+.memoryPrototype h3 {
+  margin: 0 0 14px;
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.mockTable {
+  display: grid;
+  gap: 1px;
+  margin-top: 14px;
+  overflow: hidden;
+  border: 1px solid #2f4250;
+  border-radius: 8px;
+  background: #2f4250;
+}
+
+.mockTableHeader,
+.mockTableRow {
+  display: grid;
+  grid-template-columns: 0.85fr 1.2fr 1.45fr 1fr;
+  gap: 1px;
+}
+
+.mockTableHeader span,
+.mockTableRow span,
+.mockTableRow strong {
+  min-height: 44px;
+  padding: 11px;
+  color: #d8e2e8;
+  background: #0c1117;
+  font-size: 0.84rem;
+}
+
+.mockTableHeader span {
+  color: #6fffc0;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.mockTableRow strong {
+  color: #ffffff;
+}
+
+.memoryPrototypeNote {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #375447;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #07110d;
+}
+
 @media (max-width: 780px) {
   .statusStrip,
   .cardGrid,
   .prepGrid,
   .realityGrid,
+  .mockTableHeader,
+  .mockTableRow,
   .matrixHeader,
   .matrixRow {
     grid-template-columns: 1fr;
@@ -451,6 +513,10 @@ h2 {
   }
 
   .matrixHeader {
+    display: none;
+  }
+
+  .mockTableHeader {
     display: none;
   }
 }
