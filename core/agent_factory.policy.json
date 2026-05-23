@@ -1,0 +1,27 @@
+{
+  "mode": "PUBLIC_MODE",
+  "status": "proposal_only",
+  "purpose": "Define agent proposals without creating autonomous agents.",
+  "allowed": [
+    "Propose agent roles",
+    "Define responsibilities",
+    "Define boundaries",
+    "Define required inputs and outputs"
+  ],
+  "prohibited": [
+    "Creating live agents",
+    "Granting tool access",
+    "Autonomous execution",
+    "Handling secrets",
+    "Connecting to private systems"
+  ],
+  "required_agent_fields": [
+    "name",
+    "purpose",
+    "inputs",
+    "outputs",
+    "permissions",
+    "limits",
+    "human_approval_required"
+  ]
+}

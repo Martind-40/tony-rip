@@ -1,0 +1,23 @@
+{
+  "mode": "PUBLIC_MODE",
+  "purpose": "Convert raw public-safe notes into structured memory.",
+  "input_rules": [
+    "Use only public-safe content",
+    "Replace sensitive details with placeholders",
+    "Mark unknowns explicitly",
+    "Do not infer private facts"
+  ],
+  "output_sections": [
+    "Summary",
+    "Key decisions",
+    "Open questions",
+    "Reusable knowledge",
+    "Next actions"
+  ],
+  "quality_bar": [
+    "Clear source label",
+    "No private data",
+    "No unsupported certainty",
+    "Actionable next step"
+  ]
+}

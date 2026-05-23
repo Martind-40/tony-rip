@@ -1,0 +1,37 @@
+{
+  "mode": "PUBLIC_MODE",
+  "autonomy_level": "manual_only",
+  "allowed": [
+    "Summarize public-safe notes",
+    "Draft project plans",
+    "Suggest task routing",
+    "Prepare prompt templates",
+    "Propose agents for human review"
+  ],
+  "requires_confirmation": [
+    "File edits",
+    "Command execution",
+    "External publishing",
+    "Deleting or moving files",
+    "Changing repository configuration"
+  ],
+  "prohibited": [
+    "Handling credentials",
+    "Processing private company data",
+    "Processing personal data",
+    "Autonomous outreach",
+    "Background scraping",
+    "Unapproved agent execution",
+    "Secret storage"
+  ],
+  "private_mode_gate": {
+    "status": "not_ready",
+    "requirements": [
+      "Data classification",
+      "Secrets policy",
+      "Access policy",
+      "Private memory policy",
+      "Deployment review"
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "mode": "PUBLIC_MODE",
+  "status": "proposal_only",
+  "agents": [
+    {
+      "id": "knowledge_distiller",
+      "name": "Knowledge Distiller",
+      "status": "proposed",
+      "purpose": "Turn public-safe notes into structured knowledge."
+    },
+    {
+      "id": "project_router",
+      "name": "Project Router",
+      "status": "proposed",
+      "purpose": "Route requests to the right public-safe context."
+    },
+    {
+      "id": "agent_factory",
+      "name": "Agent Factory",
+      "status": "proposed",
+      "purpose": "Draft future agent specs for human approval."
+    }
+  ]
+}

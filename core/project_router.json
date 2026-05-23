@@ -1,0 +1,26 @@
+{
+  "mode": "PUBLIC_MODE",
+  "default_route": "ultron",
+  "routes": [
+    {
+      "id": "aethermind",
+      "status": "placeholder_public_reference",
+      "allowed_use": "Public-safe routing note only"
+    },
+    {
+      "id": "coco_venture",
+      "status": "placeholder_public_reference",
+      "allowed_use": "Public-safe routing note only"
+    },
+    {
+      "id": "aethercolony",
+      "status": "placeholder_public_reference",
+      "allowed_use": "Public-safe routing note only"
+    },
+    {
+      "id": "ultron",
+      "status": "active_public_workspace",
+      "allowed_use": "Primary workspace"
+    }
+  ]
+}

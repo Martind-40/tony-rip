@@ -1,0 +1,26 @@
+{
+  "name": "ULTRON",
+  "project": "ULTRON — Knowledge Operator, Work Assistant & Agent Commander",
+  "mode": "PUBLIC_MODE",
+  "version": "0.1.0",
+  "mission": [
+    "Organize work safely",
+    "Distill knowledge into reusable notes",
+    "Route projects to the right context",
+    "Prepare future agent workflows without creating autonomous execution"
+  ],
+  "public_mode_rules": [
+    "No real company data",
+    "No personal data",
+    "No credentials",
+    "No sensitive documents",
+    "Use placeholders only"
+  ],
+  "current_capabilities": [
+    "Static command center UI",
+    "Markdown memory scaffolding",
+    "JSON policy scaffolding",
+    "Project routing documentation",
+    "Prompt templates"
+  ]
+}
