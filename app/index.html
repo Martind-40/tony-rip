@@ -8,9 +8,27 @@
       content="ULTRON public-mode command center for knowledge operations."
     />
     <title>ULTRON Command Center</title>
+    <style>
+      body {
+        margin: 0;
+        background: #05070a;
+        color: #ffffff;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .boot-fallback {
+        min-height: 100vh;
+        padding: 32px;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main class="boot-fallback">
+        <h1>ULTRON Command Center</h1>
+        <p>Public demo mode is loading.</p>
+      </main>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
