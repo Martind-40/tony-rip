@@ -3,7 +3,8 @@ import React, { useEffect, useMemo, useState } from "react";
 const STORAGE_KEYS = {
   tasks: "ultron.demo.tasks",
   knowledge: "ultron.demo.knowledge",
-  approvals: "ultron.demo.approvals"
+  approvals: "ultron.demo.approvals",
+  operatorActions: "ultron.demo.operatorActions"
 };
 
 function createId(prefix) {
@@ -284,6 +285,85 @@ const realityMatrix = [
   }
 ];
 
+const operatorSystemState = [
+  { label: "Public Demo Mode", value: "ACTIVE" },
+  { label: "Private Mode", value: "NOT_READY" },
+  { label: "Operator Core", value: "MVP_READY" },
+  { label: "Autonomous Agents", value: "BLOCKED" },
+  { label: "Model Router", value: "PLACEHOLDER" },
+  { label: "MCP Tools", value: "PLANNED" },
+  { label: "Safe Terminal", value: "CONTROLLED" }
+];
+
+const safeCommands = [
+  {
+    name: "Check Project Status",
+    status: "SAFE_MOCK",
+    risk: "LOW",
+    result:
+      "Project status inspection prepared. Real terminal execution requires Private Mode."
+  },
+  {
+    name: "View Last Build State",
+    status: "SAFE_MOCK",
+    risk: "LOW",
+    result:
+      "Last known build state is represented by local validation notes. No backend build runner is connected."
+  },
+  {
+    name: "Review Git Status",
+    status: "SAFE_MOCK",
+    risk: "LOW",
+    result:
+      "Git status review is staged as a controlled read-only action. UI does not execute git commands."
+  },
+  {
+    name: "Inspect Operator Logs",
+    status: "SAFE",
+    risk: "LOW",
+    result:
+      "Visible Action Log updated in browser state. Demo log contains no private data."
+  },
+  {
+    name: "Prepare Model Router",
+    status: "PLACEHOLDER_READY",
+    risk: "LOW",
+    result: "Model router strategy prepared. No API keys connected."
+  },
+  {
+    name: "Review Safety Rules",
+    status: "SAFE",
+    risk: "LOW",
+    result:
+      "Safety policy visible. Sensitive data, autonomous agents and external execution remain blocked."
+  }
+];
+
+const modelRouterRows = [
+  { model: "Local/free model", status: "READY_FOR_DESIGN" },
+  { model: "OpenAI", status: "AVAILABLE_LATER" },
+  { model: "Claude", status: "AVAILABLE_LATER" },
+  { model: "Gemini", status: "AVAILABLE_LATER" },
+  { model: "Ollama/Qwen/Gemma", status: "FUTURE_LOCAL" },
+  { model: "Routing policy", status: "COST_PRIVACY_QUALITY" }
+];
+
+const approvalPolicyRows = [
+  "READ_ONLY",
+  "SUGGEST_ONLY",
+  "SAFE_EXECUTE",
+  "APPROVAL_REQUIRED",
+  "BLOCKED"
+];
+
+const absorptionRows = [
+  { source: "Claurst", pattern: "terminal agent / MCP / ACP" },
+  { source: "OpenHands", pattern: "sandbox / software agent" },
+  { source: "Aider", pattern: "coding assistant / diffs" },
+  { source: "LiteLLM", pattern: "model router" },
+  { source: "MCP servers", pattern: "tooling connectors" }
+];
+
 function StatusList({ items }) {
   return (
     <div className="statusList">
@@ -309,6 +389,12 @@ function App() {
   const [approvalItems, setApprovalItems] = useState(() =>
     loadDemoState(STORAGE_KEYS.approvals, [])
   );
+  const [operatorActions, setOperatorActions] = useState(() =>
+    loadDemoState(STORAGE_KEYS.operatorActions, [])
+  );
+  const [lastOperatorResult, setLastOperatorResult] = useState(
+    "No command selected yet."
+  );
 
   useEffect(() => {
     saveDemoState(STORAGE_KEYS.tasks, tasks);
@@ -321,6 +407,10 @@ function App() {
   useEffect(() => {
     saveDemoState(STORAGE_KEYS.approvals, approvalItems);
   }, [approvalItems]);
+
+  useEffect(() => {
+    saveDemoState(STORAGE_KEYS.operatorActions, operatorActions);
+  }, [operatorActions]);
 
   const taskCounts = useMemo(
     () => ({
@@ -421,6 +511,20 @@ function App() {
     );
   }
 
+  function handleCommand(command) {
+    const entry = {
+      id: createId("OP"),
+      action: command.name,
+      status: command.status,
+      timestamp: new Date().toLocaleString(),
+      result: command.result,
+      risk: command.risk
+    };
+
+    setLastOperatorResult(command.result);
+    setOperatorActions((current) => [entry, ...current].slice(0, 12));
+  }
+
   return (
     <main className="appShell">
       <header className="terminalBar" aria-label="Operator terminal header">
@@ -473,6 +577,106 @@ function App() {
         <div>
           <span>Deploy Target</span>
           <strong>Vercel</strong>
+        </div>
+      </section>
+
+      <section className="operatorCorePanel" aria-labelledby="operator-core">
+        <div className="sectionIntro">
+          <p className="eyebrow">FUNCTIONAL MVP / OPERATOR CORE</p>
+          <h2 id="operator-core">ULTRON Operator Core</h2>
+          <p>
+            Controlled frontend operator core with safe command cards, action
+            logging, model routing placeholder and permission visibility.
+          </p>
+        </div>
+        <p className="safetyLine">
+          Do not enter private, company, client, credential or sensitive data.
+        </p>
+
+        <div className="operatorCoreGrid">
+          <article className="operatorCoreCard">
+            <h3>System State</h3>
+            <StatusList items={operatorSystemState} />
+          </article>
+
+          <article className="operatorCoreCard commandCenterCard">
+            <h3>Safe Command Center</h3>
+            <div className="safeCommandGrid">
+              {safeCommands.map((command) => (
+                <button
+                  type="button"
+                  key={command.name}
+                  onClick={() => handleCommand(command)}
+                >
+                  <span>{command.name}</span>
+                  <strong>{command.status}</strong>
+                </button>
+              ))}
+            </div>
+            <p className="operatorResult">{lastOperatorResult}</p>
+          </article>
+
+          <article className="operatorCoreCard actionLogCard">
+            <div className="moduleHeader">
+              <div>
+                <span>Local visible record</span>
+                <h3>Action Log</h3>
+              </div>
+              <strong>{operatorActions.length} entries</strong>
+            </div>
+            <div className="actionLogList">
+              {operatorActions.length === 0 ? (
+                <p className="emptyState">No operator actions yet.</p>
+              ) : (
+                operatorActions.map((entry) => (
+                  <div className="actionLogEntry" key={entry.id}>
+                    <strong>{entry.action}</strong>
+                    <span>{entry.status}</span>
+                    <span>{entry.timestamp}</span>
+                    <p>{entry.result}</p>
+                    <small>Risk: {entry.risk}</small>
+                  </div>
+                ))
+              )}
+            </div>
+          </article>
+
+          <article className="operatorCoreCard">
+            <h3>Model Router Placeholder</h3>
+            <div className="compactTable">
+              {modelRouterRows.map((row) => (
+                <div key={row.model}>
+                  <span>{row.model}</span>
+                  <strong>{row.status}</strong>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <article className="operatorCoreCard">
+            <h3>Human Approval Policy</h3>
+            <div className="policyPills">
+              {approvalPolicyRows.map((level) => (
+                <span key={level}>{level}</span>
+              ))}
+            </div>
+          </article>
+
+          <article className="operatorCoreCard">
+            <h3>Open Source Absorption</h3>
+            <div className="compactTable">
+              {absorptionRows.map((row) => (
+                <div key={row.source}>
+                  <span>{row.source}</span>
+                  <strong>{row.pattern}</strong>
+                </div>
+              ))}
+            </div>
+            <p className="warningText">
+              No real integration, destructive autonomy or connected
+              credentials are active.
+            </p>
+          </article>
         </div>
       </section>
 

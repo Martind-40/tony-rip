@@ -205,6 +205,155 @@ h1 {
   color: #d8e2e8;
 }
 
+.operatorCorePanel {
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid #3f6a5a;
+  border-radius: 8px;
+  background: #0a1512;
+}
+
+.operatorCoreGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.operatorCoreCard {
+  min-height: 220px;
+  padding: 16px;
+  border: 1px solid #2f4250;
+  border-radius: 8px;
+  background: #101820;
+}
+
+.operatorCoreCard h3 {
+  margin: 0 0 14px;
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.commandCenterCard,
+.actionLogCard {
+  grid-column: span 2;
+}
+
+.safeCommandGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.safeCommandGrid button {
+  display: grid;
+  gap: 8px;
+  min-height: 74px;
+  padding: 12px;
+  border: 1px solid #375447;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #12251d;
+  cursor: pointer;
+  text-align: left;
+}
+
+.safeCommandGrid button:hover {
+  border-color: #6fffc0;
+}
+
+.safeCommandGrid span {
+  font-weight: 800;
+}
+
+.safeCommandGrid strong {
+  color: #6fffc0;
+  font-size: 0.76rem;
+}
+
+.operatorResult {
+  margin: 12px 0 0;
+  padding: 12px;
+  border: 1px solid #263846;
+  border-radius: 8px;
+  color: #d8e2e8;
+  background: #0c1117;
+}
+
+.actionLogList {
+  display: grid;
+  gap: 10px;
+  max-height: 360px;
+  overflow: auto;
+}
+
+.actionLogEntry {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid #263846;
+  border-radius: 8px;
+  background: #0c1117;
+}
+
+.actionLogEntry strong {
+  color: #ffffff;
+}
+
+.actionLogEntry span,
+.actionLogEntry small {
+  color: #9fb2bf;
+  font-size: 0.8rem;
+}
+
+.actionLogEntry p {
+  margin: 0;
+  color: #d8e2e8;
+  font-size: 0.88rem;
+}
+
+.compactTable {
+  display: grid;
+  gap: 8px;
+}
+
+.compactTable div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 38px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #1f303c;
+}
+
+.compactTable span {
+  color: #d8e2e8;
+  font-size: 0.84rem;
+}
+
+.compactTable strong {
+  color: #6fffc0;
+  font-size: 0.78rem;
+  text-align: right;
+}
+
+.policyPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.policyPills span {
+  padding: 7px 9px;
+  border: 1px solid #375447;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #07110d;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
 .actionableOperator {
   margin: 18px 0;
   padding: 18px;
@@ -826,6 +975,8 @@ h2 {
 @media (max-width: 780px) {
   .statusStrip,
   .cardGrid,
+  .operatorCoreGrid,
+  .safeCommandGrid,
   .operatorModules,
   .operatorForm,
   .counterGrid,
@@ -860,6 +1011,11 @@ h2 {
 
   .cardHeader {
     flex-direction: column;
+  }
+
+  .commandCenterCard,
+  .actionLogCard {
+    grid-column: auto;
   }
 
   .matrixHeader {

@@ -353,6 +353,69 @@ Do not enter private, company, client, credential or sensitive data.
 
 ---
 
+## Master Architecture Closeout
+
+Status: PUBLIC_ACTIONABLE_OPERATOR_MVP_CLOSED
+
+ULTRON is closed as a safe public Actionable Operator MVP after Sprint 16.
+
+Current capabilities:
+
+- Task Console.
+- Knowledge Capture.
+- Mock Approval Queue.
+- Demo-only localStorage persistence.
+
+Still blocked:
+
+- Backend.
+- Auth.
+- APIs.
+- Sensitive data.
+- Real agents.
+- External execution.
+
+Next direction:
+
+Power Layer Prep first, then UI polish after Chief approval.
+
+---
+
+## ULTRON Functional MVP
+
+Status: FUNCTIONAL_MVP_READY
+
+Document created: `docs/ULTRON_FUNCTIONAL_MVP_CLOSEOUT.md`
+
+Operator Core status document: `docs/ULTRON_OPERATOR_CORE_STATUS.md`
+
+Implemented:
+
+- Visible ULTRON Operator Core panel.
+- Safe Command Center buttons.
+- Browser Action Log with timestamps, results and risk labels.
+- Model Router placeholder.
+- Human Approval Policy panel.
+- Open Source Absorption panel.
+
+Still controlled/mock:
+
+- Safe commands return frontend-controlled results.
+- Model Router is a placeholder.
+- MCP tools are planned, not connected.
+
+Still blocked:
+
+- Backend.
+- Auth.
+- APIs.
+- Credentials.
+- Sensitive data.
+- Autonomous agents.
+- External execution.
+
+---
+
 ## Operating Mode
 
 Default mode:
@@ -403,6 +466,8 @@ Sprint 15 controlled private mode MVP: complete.
 
 Sprint 16 actionable operator MVP: ready for review.
 
-Technical posture: lightweight, local-first, documentation-first.
+ULTRON Functional MVP: ready for review.
 
-Next milestone: review and close Actionable Operator MVP.
+Technical posture: lightweight, local-first, frontend-functional.
+
+Next milestone: approve or reject real local command bridge design.
