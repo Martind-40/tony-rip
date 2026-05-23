@@ -271,6 +271,18 @@ Limits remain unchanged: no backend, no auth, no APIs, no real data, no private 
 
 ---
 
+## Sprint 12 — Private Architecture Blueprint
+
+Status: COMPLETED / BLUEPRINT_READY
+
+Document created: `docs/SPRINT_12_PRIVATE_ARCHITECTURE_BLUEPRINT.md`
+
+The blueprint defines future Private Mode layers, security limits, data classification, approval gates, memory boundaries and storage options. Private Mode remains NOT_READY. There is no real private implementation, no backend, no auth, no APIs, no real memory and no autonomous agents.
+
+Recommended next sprint: Sprint 13 — Local-Only Private Memory Prototype.
+
+---
+
 ## Operating Mode
 
 Default mode:
@@ -309,8 +321,10 @@ Sprint 9 public demo final QA and release closeout: complete.
 
 Sprint 10 public demo presentation pack: complete.
 
-Sprint 11 feedback capture and demo iteration: ready for commit.
+Sprint 11 feedback capture and demo iteration: complete.
+
+Sprint 12 private architecture blueprint: ready for commit.
 
 Technical posture: lightweight, local-first, documentation-first.
 
-Next milestone: private architecture blueprint.
+Next milestone: local-only private memory prototype.

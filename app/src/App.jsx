@@ -57,6 +57,15 @@ const presentationStatus = [
   { label: "Real data", value: "NOT_CONNECTED" }
 ];
 
+const architectureStatus = [
+  { label: "Blueprint", value: "READY" },
+  { label: "Private Mode", value: "NOT_READY" },
+  { label: "Storage", value: "NOT_IMPLEMENTED" },
+  { label: "Approval Gate", value: "DESIGNED" },
+  { label: "Agent Execution", value: "BLOCKED" },
+  { label: "Real Data", value: "NOT_CONNECTED" }
+];
+
 const approvalGate = [
   "Every sensitive action requires approval",
   "No autonomous execution",
@@ -272,6 +281,10 @@ function App() {
           <article>
             <h3>Demo Presentation Ready</h3>
             <StatusList items={presentationStatus} />
+          </article>
+          <article>
+            <h3>Private Architecture Blueprint</h3>
+            <StatusList items={architectureStatus} />
           </article>
           <article>
             <h3>Human Approval Gate</h3>
