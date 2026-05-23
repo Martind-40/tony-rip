@@ -480,6 +480,66 @@ h2 {
   background: #07110d;
 }
 
+.approvalPrototype {
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid #2f4250;
+  border-radius: 8px;
+  background: #101820;
+}
+
+.approvalPrototype h3 {
+  margin: 0 0 14px;
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.approvalTable {
+  display: grid;
+  gap: 1px;
+  margin-top: 14px;
+  overflow: hidden;
+  border: 1px solid #2f4250;
+  border-radius: 8px;
+  background: #2f4250;
+}
+
+.approvalTableHeader,
+.approvalTableRow {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr 0.75fr 1.55fr 1fr;
+  gap: 1px;
+}
+
+.approvalTableHeader span,
+.approvalTableRow span,
+.approvalTableRow strong {
+  min-height: 44px;
+  padding: 11px;
+  color: #d8e2e8;
+  background: #0c1117;
+  font-size: 0.84rem;
+}
+
+.approvalTableHeader span {
+  color: #6fffc0;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.approvalTableRow strong {
+  color: #ffffff;
+}
+
+.approvalPrototypeNote {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #375447;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #07110d;
+}
+
 @media (max-width: 780px) {
   .statusStrip,
   .cardGrid,
@@ -487,6 +547,8 @@ h2 {
   .realityGrid,
   .mockTableHeader,
   .mockTableRow,
+  .approvalTableHeader,
+  .approvalTableRow,
   .matrixHeader,
   .matrixRow {
     grid-template-columns: 1fr;
@@ -517,6 +579,10 @@ h2 {
   }
 
   .mockTableHeader {
+    display: none;
+  }
+
+  .approvalTableHeader {
     display: none;
   }
 }

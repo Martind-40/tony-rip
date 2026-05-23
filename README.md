@@ -297,6 +297,20 @@ Recommended next sprint: Sprint 14 — Approval Queue Prototype.
 
 ---
 
+## Sprint 14 — Approval Queue Prototype
+
+Status: COMPLETED / MOCK_APPROVAL_READY
+
+Document created: `docs/SPRINT_14_APPROVAL_QUEUE_PROTOTYPE.md`
+
+Sprint 14 adds a mock approval queue for future sensitive actions. It represents human review, risk classification, mock approval states and mock audit logging only.
+
+Limits remain unchanged: no real execution, no real agents, no backend, no auth, no APIs and no real data.
+
+Recommended next sprint: Sprint 15 — Controlled Private Mode MVP.
+
+---
+
 ## Operating Mode
 
 Default mode:
@@ -339,8 +353,10 @@ Sprint 11 feedback capture and demo iteration: complete.
 
 Sprint 12 private architecture blueprint: complete.
 
-Sprint 13 local-only private memory prototype: ready for commit.
+Sprint 13 local-only private memory prototype: complete.
+
+Sprint 14 approval queue prototype: ready for commit.
 
 Technical posture: lightweight, local-first, documentation-first.
 
-Next milestone: approval queue prototype.
+Next milestone: controlled private mode MVP.

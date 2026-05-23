@@ -97,6 +97,46 @@ const mockMemoryItems = [
   }
 ];
 
+const approvalQueueStatus = [
+  { label: "Queue mode", value: "MOCK_ONLY" },
+  { label: "Execution", value: "DISABLED" },
+  { label: "Human approval", value: "REQUIRED" },
+  { label: "Agents", value: "BLOCKED" },
+  { label: "Real actions", value: "NOT_CONNECTED" },
+  { label: "Audit", value: "MOCK_LOGGED" }
+];
+
+const mockApprovalRequests = [
+  {
+    request: "APR-001",
+    type: "memory_write",
+    risk: "medium",
+    approval: "PENDING_REVIEW_MOCK",
+    execution: "NOT_EXECUTED"
+  },
+  {
+    request: "APR-002",
+    type: "sensitive_data_intake",
+    risk: "critical",
+    approval: "BLOCKED_MOCK",
+    execution: "DENIED"
+  },
+  {
+    request: "APR-003",
+    type: "agent_action",
+    risk: "high",
+    approval: "EXECUTION_DENIED_MOCK",
+    execution: "DENIED"
+  },
+  {
+    request: "APR-004",
+    type: "public_demo_note",
+    risk: "low",
+    approval: "APPROVED_MOCK",
+    execution: "MOCK_ONLY"
+  }
+];
+
 const approvalGate = [
   "Every sensitive action requires approval",
   "No autonomous execution",
@@ -406,6 +446,34 @@ function App() {
             This is a local-only memory prototype using mock data. No real
             private data, credentials, backend, authentication, APIs, cloud
             storage, or autonomous agents are connected.
+          </p>
+        </div>
+
+        <div className="approvalPrototype">
+          <h3>Approval Queue Prototype</h3>
+          <StatusList items={approvalQueueStatus} />
+          <div className="approvalTable" aria-label="Mock approval queue">
+            <div className="approvalTableHeader">
+              <span>Request</span>
+              <span>Type</span>
+              <span>Risk</span>
+              <span>Approval</span>
+              <span>Execution</span>
+            </div>
+            {mockApprovalRequests.map((request) => (
+              <div className="approvalTableRow" key={request.request}>
+                <strong>{request.request}</strong>
+                <span>{request.type}</span>
+                <span>{request.risk}</span>
+                <span>{request.approval}</span>
+                <span>{request.execution}</span>
+              </div>
+            ))}
+          </div>
+          <p className="approvalPrototypeNote">
+            This approval queue is a mock prototype. No real actions, agents,
+            memory writes, backend, APIs, authentication, or private data are
+            connected.
           </p>
         </div>
       </section>
