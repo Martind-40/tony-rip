@@ -123,6 +123,39 @@ const mvpMatrix = [
   }
 ];
 
+const realityMatrix = [
+  {
+    capability: "Command Center",
+    current: "Visual demo ready",
+    future: "Future operational hub"
+  },
+  {
+    capability: "Private Mode",
+    current: "Not ready",
+    future: "Controlled private workspace"
+  },
+  {
+    capability: "Manual Memory",
+    current: "Design only",
+    future: "Local/private memory with review"
+  },
+  {
+    capability: "Agent Permissions",
+    current: "Documented",
+    future: "Approval-based execution control"
+  },
+  {
+    capability: "Backend / Auth / APIs",
+    current: "Not connected",
+    future: "Approved private architecture"
+  },
+  {
+    capability: "Agents",
+    current: "Blocked",
+    future: "Human-approved agents"
+  }
+];
+
 function StatusList({ items }) {
   return (
     <div className="statusList">
@@ -152,8 +185,12 @@ function App() {
         <p className="eyebrow">ULTRON / PUBLIC FOUNDATION</p>
         <h1 id="ultron-title">ULTRON Command Center</h1>
         <p className="heroText">
-          A stable operator terminal for safe knowledge work demos: visible
-          command modules, public-only narrative, and zero backend dependencies.
+          A public demo command center for a future work assistant and
+          knowledge operator.
+        </p>
+        <p className="safetyLine">
+          Public demo only — no real data, backend, authentication, APIs,
+          private memory, or autonomous agents are connected.
         </p>
         <div className="commandLine" aria-label="Current operator command">
           <span>$</span>
@@ -287,6 +324,19 @@ function App() {
               <span>{row.next}</span>
             </div>
           ))}
+        </div>
+
+        <div className="realityPanel">
+          <h3>Current Reality vs Future Capability</h3>
+          <div className="realityGrid">
+            {realityMatrix.map((row) => (
+              <article key={row.capability}>
+                <strong>{row.capability}</strong>
+                <span>Current: {row.current}</span>
+                <span>Future: {row.future}</span>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
     </main>

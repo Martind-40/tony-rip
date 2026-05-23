@@ -252,6 +252,25 @@ The demo remains in PUBLIC DEMO MODE. Private Mode remains NOT_READY. Manual Pri
 
 ---
 
+## Sprint 11 — Feedback Capture & Demo Iteration
+
+Status: COMPLETED / DEMO_ITERATION_READY
+
+Objective: improve clarity of the public demo from an external viewer perspective.
+
+Document created: `docs/SPRINT_11_FEEDBACK_CAPTURE_DEMO_ITERATION.md`
+
+Changes:
+
+- Feedback capture matrix.
+- Reviewer questions.
+- Current Reality vs Future Capability framing.
+- Stronger public-demo-only safety line.
+
+Limits remain unchanged: no backend, no auth, no APIs, no real data, no private memory persistence and no autonomous agents.
+
+---
+
 ## Operating Mode
 
 Default mode:
@@ -288,8 +307,10 @@ Sprint 8 private mode MVP preparation: complete.
 
 Sprint 9 public demo final QA and release closeout: complete.
 
-Sprint 10 public demo presentation pack: ready for commit.
+Sprint 10 public demo presentation pack: complete.
+
+Sprint 11 feedback capture and demo iteration: ready for commit.
 
 Technical posture: lightweight, local-first, documentation-first.
 
-Next milestone: feedback capture and demo iteration.
+Next milestone: private architecture blueprint.

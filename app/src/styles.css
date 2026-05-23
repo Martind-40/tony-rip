@@ -116,6 +116,17 @@ h1 {
   font-size: 1.08rem;
 }
 
+.safetyLine {
+  max-width: 840px;
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #375447;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #07110d;
+  font-weight: 700;
+}
+
 .commandLine {
   display: flex;
   align-items: center;
@@ -370,10 +381,50 @@ h2 {
   color: #ffffff;
 }
 
+.realityPanel {
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid #2f4250;
+  border-radius: 8px;
+  background: #101820;
+}
+
+.realityPanel h3 {
+  margin: 0 0 14px;
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.realityGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.realityGrid article {
+  display: grid;
+  gap: 7px;
+  min-height: 112px;
+  padding: 14px;
+  border: 1px solid #2f4250;
+  border-radius: 8px;
+  background: #0c1117;
+}
+
+.realityGrid strong {
+  color: #ffffff;
+}
+
+.realityGrid span {
+  color: #d8e2e8;
+  font-size: 0.88rem;
+}
+
 @media (max-width: 780px) {
   .statusStrip,
   .cardGrid,
   .prepGrid,
+  .realityGrid,
   .matrixHeader,
   .matrixRow {
     grid-template-columns: 1fr;
