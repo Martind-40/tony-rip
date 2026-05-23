@@ -92,13 +92,14 @@ npm install
 npm run build
 ```
 
-The Vercel configuration builds from `/app`:
+Vercel Dashboard Mode uses `/app` as the project root:
 
 ```json
 {
-  "buildCommand": "cd app && npm install && npm run build",
-  "outputDirectory": "app/dist",
-  "framework": "vite"
+  "framework": "vite",
+  "installCommand": "npm install",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist"
 }
 ```
 
@@ -106,11 +107,13 @@ Recommended Vercel project settings:
 
 ```text
 Framework Preset: Vite
-Build Command: cd app && npm install && npm run build
-Output Directory: app/dist
-Install Command: default or npm install
-Root Directory: repository root
+Root Directory: app
+Install Command: npm install
+Build Command: npm run build
+Output Directory: dist
 ```
+
+The Vercel config file lives at `app/vercel.json` to match Dashboard Mode. The repository root does not need a Vercel config file for this setup.
 
 ---
 
