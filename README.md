@@ -16,7 +16,7 @@ The project is designed to start in **PUBLIC MODE** and later move to **PRIVATE 
 
 ## Current Goal
 
-Build a lightweight, zero-cost base before May 26:
+Build a lightweight, zero-cost command center before May 26:
 
 - Command Center.
 - Memory Layer.
@@ -25,6 +25,16 @@ Build a lightweight, zero-cost base before May 26:
 - Agent Factory.
 - Autonomy Policy.
 - Future Interface Roadmap.
+
+Sprint 1 focuses on operational UX hardening:
+
+- Daily Brief.
+- Tasks.
+- Knowledge Vault.
+- Project Router.
+- Agent Factory.
+- Reports.
+- Future Capabilities.
 
 ---
 
@@ -73,6 +83,16 @@ Build:
 npm run build
 ```
 
+The Vercel configuration builds from `/app`:
+
+```json
+{
+  "buildCommand": "cd app && npm install && npm run build",
+  "outputDirectory": "app/dist",
+  "framework": "vite"
+}
+```
+
 ---
 
 ## Operating Mode
@@ -91,8 +111,10 @@ Private mode must not begin until security, storage, access control and data-han
 
 ## Status
 
-Base scaffold: in progress.
+Sprint 0 public foundation: complete.
+
+Sprint 1 command center UX hardening: in progress.
 
 Technical posture: lightweight, local-first, documentation-first.
 
-Next milestone: complete manual memory workflows and private-mode readiness checklist.
+Next milestone: private-mode readiness checklist and manual memory workflow.
