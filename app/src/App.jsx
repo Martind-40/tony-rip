@@ -48,6 +48,15 @@ const memoryStatus = [
   { label: "Export/import", value: "MOCK_ONLY" }
 ];
 
+const presentationStatus = [
+  { label: "Public demo", value: "READY" },
+  { label: "Presentation pack", value: "READY" },
+  { label: "Private mode", value: "NOT_READY" },
+  { label: "Manual memory", value: "DESIGN_ONLY" },
+  { label: "Agents", value: "BLOCKED" },
+  { label: "Real data", value: "NOT_CONNECTED" }
+];
+
 const approvalGate = [
   "Every sensitive action requires approval",
   "No autonomous execution",
@@ -203,7 +212,7 @@ function App() {
         ))}
       </section>
 
-      <section className="privateMvp" aria-labelledby="private-mvp-title">
+        <section className="privateMvp" aria-labelledby="private-mvp-title">
         <div className="sectionIntro">
           <p className="eyebrow">SPRINT 8 / PRIVATE MODE MVP PREPARATION</p>
           <h2 id="private-mvp-title">Private Mode MVP Preparation</h2>
@@ -222,6 +231,10 @@ function App() {
           <article>
             <h3>Manual Private Memory</h3>
             <StatusList items={memoryStatus} />
+          </article>
+          <article>
+            <h3>Demo Presentation Ready</h3>
+            <StatusList items={presentationStatus} />
           </article>
           <article>
             <h3>Human Approval Gate</h3>

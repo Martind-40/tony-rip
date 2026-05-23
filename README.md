@@ -231,6 +231,27 @@ Next recommended sprint: Sprint 10 — Private Architecture Decision Gate.
 
 ---
 
+## Sprint 10 — Public Demo Presentation Pack
+
+Status: COMPLETED / PRESENTATION_READY
+
+Document created: `docs/SPRINT_10_PUBLIC_DEMO_PRESENTATION_PACK.md`
+
+Use: executive presentation of the public demo.
+
+The demo remains in PUBLIC DEMO MODE. Private Mode remains NOT_READY. Manual Private Memory remains DESIGN_ONLY. Autonomous Agents remain BLOCKED. There is no backend, no auth, no APIs and no real data.
+
+| Asset | Status | Notes |
+|---|---|---|
+| Presentation Pack | READY | Executive demo narrative |
+| 3-Minute Script | READY | Demo walkthrough |
+| 60-Second Pitch | READY | Short executive pitch |
+| Demo Checklist | READY | Before/during/after guide |
+| Safety Talking Points | READY | Public-safe positioning |
+| Roadmap | READY | Future sprint direction |
+
+---
+
 ## Operating Mode
 
 Default mode:
@@ -265,8 +286,10 @@ Sprint 7 agent permissions and human approval model: complete.
 
 Sprint 8 private mode MVP preparation: complete.
 
-Sprint 9 public demo final QA and release closeout: ready for commit.
+Sprint 9 public demo final QA and release closeout: complete.
+
+Sprint 10 public demo presentation pack: ready for commit.
 
 Technical posture: lightweight, local-first, documentation-first.
 
-Next milestone: private architecture decision gate.
+Next milestone: feedback capture and demo iteration.
