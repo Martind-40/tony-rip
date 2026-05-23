@@ -1,0 +1,58 @@
+{
+  "mode": "PUBLIC_DEMO_MODE",
+  "purpose": "Classify what ULTRON can and cannot process before Private Mode exists.",
+  "data_classes": {
+    "public": {
+      "description": "Non-sensitive information safe for public repositories and demos.",
+      "allowed_in_public_demo": true,
+      "examples": [
+        "Generic UI copy",
+        "Placeholder workflows",
+        "Public-safe checklists",
+        "Open documentation"
+      ]
+    },
+    "internal": {
+      "description": "Work context that is not public but may be low sensitivity after approval.",
+      "allowed_in_public_demo": false,
+      "requires_private_mode": true
+    },
+    "confidential": {
+      "description": "Sensitive business, customer, financial or strategic material.",
+      "allowed_in_public_demo": false,
+      "requires_explicit_approval": true
+    },
+    "restricted": {
+      "description": "Secrets, credentials, identity data, regulated data or highly sensitive material.",
+      "allowed_in_public_demo": false,
+      "default_decision": "BLOCKED"
+    }
+  },
+  "never_process_without_approval": [
+    "Passwords",
+    "API keys",
+    "Private keys",
+    "Personal identity data",
+    "Customer records",
+    "Payroll or compensation data",
+    "Legal documents",
+    "Private messages",
+    "Production datasets"
+  ],
+  "knowledge_transfer_rules": {
+    "allowed": [
+      "Abstracted operating principles",
+      "Public-safe templates",
+      "Non-sensitive UX patterns",
+      "Generic checklists"
+    ],
+    "blocked": [
+      "Unredacted source material",
+      "Company-specific facts",
+      "Personal data",
+      "Secrets",
+      "Private strategy"
+    ],
+    "approval_required": true
+  }
+}

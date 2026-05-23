@@ -1,0 +1,41 @@
+{
+  "mode": "PUBLIC_DEMO_MODE",
+  "private_mode_status": "not_active",
+  "purpose": "Define the approval gates required before ULTRON can process real work context.",
+  "readiness_decision": "NOT_READY_FOR_PRIVATE_MODE",
+  "allowed_now": [
+    "Document private-mode requirements",
+    "Define data handling boundaries",
+    "Prepare human approval checklists",
+    "Describe future authentication and memory needs",
+    "Use generic public-safe examples"
+  ],
+  "prohibited_now": [
+    "Processing real company data",
+    "Processing personal data",
+    "Storing credentials",
+    "Connecting production tools",
+    "Adding authentication",
+    "Adding backend services",
+    "Creating autonomous agents"
+  ],
+  "private_mode_entry_requirements": [
+    "Repository privacy decision",
+    "Data classification approval",
+    "Access control policy",
+    "Secret handling policy",
+    "Private memory storage policy",
+    "Human approval workflow",
+    "Audit and deletion policy",
+    "Deployment security review"
+  ],
+  "human_approval_required_for": [
+    "Any real data source",
+    "Any credential or environment variable",
+    "Any private memory storage",
+    "Any external integration",
+    "Any agent permission beyond proposal-only",
+    "Any knowledge transfer to another project"
+  ],
+  "next_review": "After documentation review and before any private implementation"
+}
