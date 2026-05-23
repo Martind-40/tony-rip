@@ -325,6 +325,34 @@ Recommended next step: Public Demo v1 Final Seal.
 
 ---
 
+## Sprint 16 — Actionable Operator MVP
+
+Status: FUNCTIONAL_FRONTEND_READY
+
+Document created: `docs/SPRINT_16_ACTIONABLE_OPERATOR_MVP.md`
+
+Sprint 16 turns ULTRON into a minimal usable frontend operator tool while keeping PUBLIC DEMO MODE active.
+
+Implemented:
+
+- Functional Task Console.
+- Functional Knowledge Capture.
+- Functional mock Approval Queue.
+- Browser-only React state with simple demo localStorage.
+
+Limits remain unchanged:
+
+- No backend.
+- No auth.
+- No APIs.
+- No sensitive data.
+- No real agents.
+- No external execution.
+
+Do not enter private, company, client, credential or sensitive data.
+
+---
+
 ## Operating Mode
 
 Default mode:
@@ -371,8 +399,10 @@ Sprint 13 local-only private memory prototype: complete.
 
 Sprint 14 approval queue prototype: complete.
 
-Sprint 15 controlled private mode MVP: ready for commit.
+Sprint 15 controlled private mode MVP: complete.
+
+Sprint 16 actionable operator MVP: ready for review.
 
 Technical posture: lightweight, local-first, documentation-first.
 
-Next milestone: public demo v1 final seal.
+Next milestone: review and close Actionable Operator MVP.

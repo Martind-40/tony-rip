@@ -1,4 +1,41 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+
+const STORAGE_KEYS = {
+  tasks: "ultron.demo.tasks",
+  knowledge: "ultron.demo.knowledge",
+  approvals: "ultron.demo.approvals"
+};
+
+function createId(prefix) {
+  return `${prefix}-${Date.now().toString(36)}-${Math.random()
+    .toString(36)
+    .slice(2, 6)}`.toUpperCase();
+}
+
+function loadDemoState(key, fallback) {
+  if (typeof window === "undefined") {
+    return fallback;
+  }
+
+  try {
+    const stored = window.localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function saveDemoState(key, value) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Demo storage is best-effort only.
+  }
+}
 
 const commandCards = [
   {
@@ -261,6 +298,129 @@ function StatusList({ items }) {
 }
 
 function App() {
+  const [taskInput, setTaskInput] = useState("");
+  const [tasks, setTasks] = useState(() =>
+    loadDemoState(STORAGE_KEYS.tasks, [])
+  );
+  const [noteInput, setNoteInput] = useState("");
+  const [knowledgeItems, setKnowledgeItems] = useState(() =>
+    loadDemoState(STORAGE_KEYS.knowledge, [])
+  );
+  const [approvalItems, setApprovalItems] = useState(() =>
+    loadDemoState(STORAGE_KEYS.approvals, [])
+  );
+
+  useEffect(() => {
+    saveDemoState(STORAGE_KEYS.tasks, tasks);
+  }, [tasks]);
+
+  useEffect(() => {
+    saveDemoState(STORAGE_KEYS.knowledge, knowledgeItems);
+  }, [knowledgeItems]);
+
+  useEffect(() => {
+    saveDemoState(STORAGE_KEYS.approvals, approvalItems);
+  }, [approvalItems]);
+
+  const taskCounts = useMemo(
+    () => ({
+      total: tasks.length,
+      pending: tasks.filter((task) => task.status === "PENDING").length,
+      doing: tasks.filter((task) => task.status === "DOING").length,
+      done: tasks.filter((task) => task.status === "DONE").length
+    }),
+    [tasks]
+  );
+
+  const pendingApprovalCount = useMemo(
+    () =>
+      approvalItems.filter((item) => item.status === "PENDING_REVIEW_MOCK")
+        .length,
+    [approvalItems]
+  );
+
+  function addTask() {
+    const title = taskInput.trim();
+    if (!title) {
+      return;
+    }
+
+    setTasks((current) => [
+      { id: createId("TASK"), title, status: "PENDING" },
+      ...current
+    ]);
+    setTaskInput("");
+  }
+
+  function updateTaskStatus(id, status) {
+    setTasks((current) =>
+      current.map((task) => (task.id === id ? { ...task, status } : task))
+    );
+  }
+
+  function deleteTask(id) {
+    setTasks((current) => current.filter((task) => task.id !== id));
+  }
+
+  function distillNote() {
+    const note = noteInput.trim();
+    if (!note) {
+      return;
+    }
+
+    setKnowledgeItems((current) => [
+      {
+        id: createId("KN"),
+        preview: note.slice(0, 120),
+        distilled: `Reusable lesson: ${note.slice(0, 160)}`,
+        classification: "PURE_KNOWLEDGE_MOCK",
+        status: "REVIEW_REQUIRED",
+        sentToApproval: false
+      },
+      ...current
+    ]);
+    setNoteInput("");
+  }
+
+  function sendToApprovalQueue(item) {
+    if (item.sentToApproval) {
+      return;
+    }
+
+    const approvalId = createId("APR");
+    setApprovalItems((current) => [
+      {
+        id: approvalId,
+        sourceId: item.id,
+        type: "knowledge_review",
+        risk: "low",
+        status: "PENDING_REVIEW_MOCK",
+        action: "Review distilled demo knowledge"
+      },
+      ...current
+    ]);
+    setKnowledgeItems((current) =>
+      current.map((record) =>
+        record.id === item.id
+          ? { ...record, sentToApproval: true, status: "PENDING_REVIEW_MOCK" }
+          : record
+      )
+    );
+  }
+
+  function deleteKnowledgeItem(id) {
+    setKnowledgeItems((current) => current.filter((item) => item.id !== id));
+    setApprovalItems((current) =>
+      current.filter((item) => item.sourceId !== id)
+    );
+  }
+
+  function updateApprovalStatus(id, status) {
+    setApprovalItems((current) =>
+      current.map((item) => (item.id === id ? { ...item, status } : item))
+    );
+  }
+
   return (
     <main className="appShell">
       <header className="terminalBar" aria-label="Operator terminal header">
@@ -314,6 +474,224 @@ function App() {
           <span>Deploy Target</span>
           <strong>Vercel</strong>
         </div>
+      </section>
+
+      <section
+        className="actionableOperator"
+        aria-labelledby="actionable-operator-title"
+      >
+        <div className="sectionIntro">
+          <p className="eyebrow">SPRINT 16 / FUNCTIONAL FRONTEND</p>
+          <h2 id="actionable-operator-title">Actionable Operator MVP</h2>
+          <p>
+            A demo-safe operator layer for tasks, reusable knowledge capture and
+            mock approval decisions. Everything runs in the browser.
+          </p>
+        </div>
+        <p className="safetyLine">
+          Do not enter private, company, client, credential or sensitive data.
+        </p>
+
+        <div className="operatorModules">
+          <article className="operatorModule" aria-labelledby="task-console">
+            <div className="moduleHeader">
+              <div>
+                <span>Module 1</span>
+                <h3 id="task-console">Task Console</h3>
+              </div>
+              <strong>{taskCounts.total} total</strong>
+            </div>
+            <div className="counterGrid" aria-label="Task counters">
+              <span>Pending: {taskCounts.pending}</span>
+              <span>Doing: {taskCounts.doing}</span>
+              <span>Done: {taskCounts.done}</span>
+            </div>
+            <div className="operatorForm">
+              <input
+                value={taskInput}
+                onChange={(event) => setTaskInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    addTask();
+                  }
+                }}
+                placeholder="Add a safe non-sensitive task..."
+                aria-label="New safe task"
+              />
+              <button type="button" onClick={addTask}>
+                Add Task
+              </button>
+            </div>
+            <p className="warningText">Do not add private or sensitive data.</p>
+            <div className="taskList">
+              {tasks.length === 0 ? (
+                <p className="emptyState">No demo tasks yet.</p>
+              ) : (
+                tasks.map((task) => (
+                  <div className="taskRow" key={task.id}>
+                    <div>
+                      <strong>{task.title}</strong>
+                      <span className="statusTag">{task.status}</span>
+                    </div>
+                    <div className="rowActions">
+                      <button
+                        type="button"
+                        onClick={() => updateTaskStatus(task.id, "DOING")}
+                      >
+                        Start
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updateTaskStatus(task.id, "DONE")}
+                      >
+                        Done
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updateTaskStatus(task.id, "PENDING")}
+                      >
+                        Reset
+                      </button>
+                      <button type="button" onClick={() => deleteTask(task.id)}>
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </article>
+
+          <article
+            className="operatorModule"
+            aria-labelledby="knowledge-capture"
+          >
+            <div className="moduleHeader">
+              <div>
+                <span>Module 2</span>
+                <h3 id="knowledge-capture">Knowledge Capture</h3>
+              </div>
+              <strong>{knowledgeItems.length} records</strong>
+            </div>
+            <textarea
+              value={noteInput}
+              onChange={(event) => setNoteInput(event.target.value)}
+              placeholder="Write a safe generic learning..."
+              aria-label="Safe generic learning note"
+            />
+            <button type="button" onClick={distillNote}>
+              Distill Note
+            </button>
+            <p className="warningText">
+              Local mock only. No APIs, no external AI and no sensitive data.
+            </p>
+            <div className="knowledgeList">
+              {knowledgeItems.length === 0 ? (
+                <p className="emptyState">No distilled demo notes yet.</p>
+              ) : (
+                knowledgeItems.map((item) => (
+                  <div className="knowledgeRecord" key={item.id}>
+                    <span className="recordId">{item.id}</span>
+                    <p>
+                      <strong>Preview:</strong> {item.preview}
+                    </p>
+                    <p>
+                      <strong>Distilled:</strong> {item.distilled}
+                    </p>
+                    <div className="recordMeta">
+                      <span>{item.classification}</span>
+                      <span>{item.status}</span>
+                    </div>
+                    <div className="rowActions">
+                      <button
+                        type="button"
+                        onClick={() => sendToApprovalQueue(item)}
+                        disabled={item.sentToApproval}
+                      >
+                        Send to Approval Queue
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deleteKnowledgeItem(item.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </article>
+
+          <article className="operatorModule" aria-labelledby="approval-actions">
+            <div className="moduleHeader">
+              <div>
+                <span>Module 3</span>
+                <h3 id="approval-actions">Approval Queue Actions</h3>
+              </div>
+              <strong>{pendingApprovalCount} pending</strong>
+            </div>
+            <div className="approvalActionTable" aria-label="Approval actions">
+              <div className="approvalActionHeader">
+                <span>ID</span>
+                <span>Type</span>
+                <span>Risk</span>
+                <span>Status</span>
+                <span>Action</span>
+              </div>
+              {approvalItems.length === 0 ? (
+                <p className="emptyState">No approval requests yet.</p>
+              ) : (
+                approvalItems.map((item) => (
+                  <div className="approvalActionRow" key={item.id}>
+                    <strong>{item.id}</strong>
+                    <span>{item.type}</span>
+                    <span>{item.risk}</span>
+                    <span>{item.status}</span>
+                    <div className="rowActions">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateApprovalStatus(item.id, "APPROVED_MOCK")
+                        }
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateApprovalStatus(item.id, "REJECTED_MOCK")
+                        }
+                      >
+                        Reject
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateApprovalStatus(item.id, "BLOCKED_MOCK")
+                        }
+                      >
+                        Block
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <p className="warningText">
+              Mock approval only. No real execution or external system control.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section className="systemBoundaryIntro" aria-label="System boundaries">
+        <p className="eyebrow">SYSTEM BOUNDARIES</p>
+        <h2>Public Demo Guardrails</h2>
+        <p>
+          The reference panels below document limits, future readiness and
+          blocked capabilities. They remain informational.
+        </p>
       </section>
 
       <section className="briefPanel" aria-label="Operator brief">

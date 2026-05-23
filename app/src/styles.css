@@ -205,6 +205,266 @@ h1 {
   color: #d8e2e8;
 }
 
+.actionableOperator {
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid #375447;
+  border-radius: 8px;
+  background: #07110d;
+}
+
+.operatorModules {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.operatorModule {
+  min-height: 320px;
+  padding: 16px;
+  border: 1px solid #2f4250;
+  border-radius: 8px;
+  background: #101820;
+}
+
+.moduleHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.moduleHeader span {
+  display: block;
+  color: #9fb2bf;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.moduleHeader h3 {
+  margin: 4px 0 0;
+  color: #ffffff;
+  font-size: 1.05rem;
+}
+
+.moduleHeader strong {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border: 1px solid #375447;
+  border-radius: 999px;
+  color: #6fffc0;
+  background: #12251d;
+  font-size: 0.78rem;
+}
+
+.counterGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.counterGrid span {
+  min-height: 34px;
+  padding: 8px;
+  border: 1px solid #263846;
+  border-radius: 8px;
+  color: #d8e2e8;
+  background: #0c1117;
+  font-size: 0.82rem;
+}
+
+.operatorForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.operatorModule input,
+.operatorModule textarea {
+  width: 100%;
+  border: 1px solid #375447;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #071017;
+}
+
+.operatorModule input {
+  min-height: 42px;
+  padding: 10px 12px;
+}
+
+.operatorModule textarea {
+  min-height: 112px;
+  padding: 12px;
+  resize: vertical;
+}
+
+.operatorModule input::placeholder,
+.operatorModule textarea::placeholder {
+  color: #7f93a1;
+}
+
+.operatorModule button {
+  min-height: 38px;
+  border: 1px solid #375447;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #12251d;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.operatorModule button:hover:not(:disabled) {
+  border-color: #6fffc0;
+}
+
+.operatorModule button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.warningText {
+  margin: 10px 0 0;
+  color: #ffd98c;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.taskList,
+.knowledgeList {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.taskRow,
+.knowledgeRecord {
+  padding: 12px;
+  border: 1px solid #263846;
+  border-radius: 8px;
+  background: #0c1117;
+}
+
+.taskRow {
+  display: grid;
+  gap: 10px;
+}
+
+.taskRow strong,
+.knowledgeRecord strong,
+.approvalActionRow strong {
+  color: #ffffff;
+}
+
+.statusTag,
+.recordId {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 7px;
+  border: 1px solid #375447;
+  border-radius: 999px;
+  color: #6fffc0;
+  background: #12251d;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rowActions button {
+  min-height: 32px;
+  padding: 6px 9px;
+  font-size: 0.8rem;
+}
+
+.emptyState {
+  margin: 0;
+  padding: 12px;
+  border: 1px dashed #375447;
+  border-radius: 8px;
+  color: #9fb2bf;
+}
+
+.knowledgeRecord p {
+  margin: 10px 0 0;
+  color: #d8e2e8;
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.recordMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.recordMeta span {
+  padding: 4px 7px;
+  border: 1px solid #263846;
+  border-radius: 999px;
+  color: #d8e2e8;
+  background: #071017;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.approvalActionTable {
+  display: grid;
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid #2f4250;
+  border-radius: 8px;
+  background: #2f4250;
+}
+
+.approvalActionHeader,
+.approvalActionRow {
+  display: grid;
+  grid-template-columns: 0.9fr 1fr 0.7fr 1.4fr 1.1fr;
+  gap: 1px;
+}
+
+.approvalActionHeader span,
+.approvalActionRow span,
+.approvalActionRow strong,
+.approvalActionRow .rowActions {
+  min-height: 44px;
+  padding: 10px;
+  color: #d8e2e8;
+  background: #0c1117;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.approvalActionHeader span {
+  color: #6fffc0;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.systemBoundaryIntro {
+  margin-bottom: 14px;
+  padding: 18px;
+  border: 1px solid #2f4250;
+  border-radius: 8px;
+  background: #0c1117;
+}
+
+.systemBoundaryIntro p:last-child {
+  max-width: 820px;
+  margin: 10px 0 0;
+  color: #d8e2e8;
+}
+
 .cardGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -566,8 +826,13 @@ h2 {
 @media (max-width: 780px) {
   .statusStrip,
   .cardGrid,
+  .operatorModules,
+  .operatorForm,
+  .counterGrid,
   .prepGrid,
   .realityGrid,
+  .approvalActionHeader,
+  .approvalActionRow,
   .mockTableHeader,
   .mockTableRow,
   .approvalTableHeader,
@@ -606,6 +871,10 @@ h2 {
   }
 
   .approvalTableHeader {
+    display: none;
+  }
+
+  .approvalActionHeader {
     display: none;
   }
 }
