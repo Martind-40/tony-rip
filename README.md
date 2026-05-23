@@ -200,6 +200,37 @@ Next recommended sprint: Sprint 9 — Public Demo Final QA + Release Closeout.
 
 ---
 
+## Sprint 9 — Public Demo Final QA + Release Closeout
+
+ULTRON remains in Public Demo Mode. The current release is safe for public presentation because it does not include real private data, credentials, backend services, authentication, APIs, autonomous agents, or private memory persistence. Private Mode, Manual Private Memory, and Autonomous Agent execution remain blocked until a future controlled architecture is approved.
+
+Final demo state:
+
+- Sprint 0 through Sprint 9 are closed or ready for closeout.
+- Public Demo UI is stable and visible.
+- Private Mode is preparation-only.
+- Manual Private Memory is design-only.
+- Agent permissions are documented.
+- Backend, auth, APIs and autonomous agents remain blocked.
+
+### ULTRON Public Demo Release Status
+
+| Area | Status | Notes |
+|---|---|---|
+| Public Demo UI | READY | Stable visual command center |
+| Private Mode | NOT_READY | Preparation only |
+| Manual Private Memory | DESIGN_ONLY | No real persistence |
+| Agent Permissions | DOCUMENTED | No real execution |
+| Backend | NOT_CONNECTED | Blocked |
+| Auth | NOT_CONNECTED | Blocked |
+| APIs | NOT_CONNECTED | Blocked |
+| Autonomous Agents | BLOCKED | Future phase only |
+| Public Presentation | READY | Safe demo narrative |
+
+Next recommended sprint: Sprint 10 — Private Architecture Decision Gate.
+
+---
+
 ## Operating Mode
 
 Default mode:
@@ -220,8 +251,22 @@ Sprint 0 public foundation: complete.
 
 Sprint 1 command center UX hardening: complete.
 
-Sprint 2 Vercel deployment readiness: in progress.
+Sprint 2 Vercel deployment readiness: complete.
+
+Sprint 3 Vercel public demo deployment: complete.
+
+Sprint 4 public operator terminal polish: complete.
+
+Sprint 5 private mode readiness plan: complete.
+
+Sprint 6 manual private memory workflow design: complete.
+
+Sprint 7 agent permissions and human approval model: complete.
+
+Sprint 8 private mode MVP preparation: complete.
+
+Sprint 9 public demo final QA and release closeout: ready for commit.
 
 Technical posture: lightweight, local-first, documentation-first.
 
-Next milestone: private-mode readiness checklist and manual memory workflow.
+Next milestone: private architecture decision gate.

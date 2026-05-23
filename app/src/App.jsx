@@ -158,12 +158,20 @@ function App() {
           <strong>PUBLIC DEMO</strong>
         </div>
         <div>
+          <span>Private Mode</span>
+          <strong>NOT_READY</strong>
+        </div>
+        <div>
+          <span>Agents</span>
+          <strong>BLOCKED</strong>
+        </div>
+        <div>
           <span>Private Data</span>
           <strong>0</strong>
         </div>
         <div>
           <span>Backend</span>
-          <strong>None</strong>
+          <strong>NOT_CONNECTED</strong>
         </div>
         <div>
           <span>Deploy Target</span>
@@ -174,9 +182,9 @@ function App() {
       <section className="briefPanel" aria-label="Operator brief">
         <h2>Operator Brief</h2>
         <p>
-          Sprint 4 keeps the public demo polished and conservative. The system
-          can present its operating model, but it does not process private work
-          data or execute autonomous actions.
+          The public demo is release-ready and conservative. The system presents
+          its operating model, but it does not process private work data,
+          connect APIs, run backend services, or execute autonomous actions.
         </p>
       </section>
 
