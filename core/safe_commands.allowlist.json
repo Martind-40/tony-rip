@@ -1,0 +1,152 @@
+{
+  "allowlist_status": "PREPARED_NOT_EXECUTING",
+  "public_demo_mode": true,
+  "commands": [
+    {
+      "id": "project_path_check",
+      "label": "Project Path Check",
+      "command": "pwd",
+      "working_directory": "/Users/macbook/ultron",
+      "status": "DISABLED_PENDING_PRIVATE_MODE",
+      "permission_level": "READ_ONLY",
+      "risk_level": "LOW",
+      "requires_chief_approval": true,
+      "destructive": false,
+      "notes": "Future read-only path verification. UI simulation only for now."
+    },
+    {
+      "id": "git_status_review",
+      "label": "Git Status Review",
+      "command": "git status",
+      "working_directory": "/Users/macbook/ultron",
+      "status": "DISABLED_PENDING_PRIVATE_MODE",
+      "permission_level": "READ_ONLY",
+      "risk_level": "LOW",
+      "requires_chief_approval": true,
+      "destructive": false,
+      "notes": "Future read-only git state check."
+    },
+    {
+      "id": "git_log_review",
+      "label": "Git Log Review",
+      "command": "git log --oneline -5",
+      "working_directory": "/Users/macbook/ultron",
+      "status": "DISABLED_PENDING_PRIVATE_MODE",
+      "permission_level": "READ_ONLY",
+      "risk_level": "LOW",
+      "requires_chief_approval": true,
+      "destructive": false,
+      "notes": "Future read-only commit history review."
+    },
+    {
+      "id": "diff_stat_review",
+      "label": "Diff Stat Review",
+      "command": "git diff --stat",
+      "working_directory": "/Users/macbook/ultron",
+      "status": "DISABLED_PENDING_PRIVATE_MODE",
+      "permission_level": "READ_ONLY",
+      "risk_level": "LOW",
+      "requires_chief_approval": true,
+      "destructive": false,
+      "notes": "Future read-only diff scope summary."
+    },
+    {
+      "id": "build_check",
+      "label": "Build Check",
+      "command": "npm run build",
+      "working_directory": "/Users/macbook/ultron/app",
+      "status": "DISABLED_PENDING_PRIVATE_MODE",
+      "permission_level": "SAFE_EXECUTE",
+      "risk_level": "LOW",
+      "requires_chief_approval": true,
+      "destructive": false,
+      "notes": "Future known build command. No package installation."
+    },
+    {
+      "id": "limited_file_scan",
+      "label": "Limited File Scan",
+      "command": "find . -maxdepth 3 -type f | sort | head -180",
+      "working_directory": "/Users/macbook/ultron",
+      "status": "DISABLED_PENDING_PRIVATE_MODE",
+      "permission_level": "READ_ONLY",
+      "risk_level": "LOW",
+      "requires_chief_approval": true,
+      "destructive": false,
+      "notes": "Future bounded file listing within ULTRON only."
+    }
+  ],
+  "blocked_commands": [
+    {
+      "id": "blocked_rm",
+      "label": "rm",
+      "command": "rm",
+      "status": "BLOCKED",
+      "risk_level": "HIGH",
+      "reason": "Destructive file deletion is blocked by default."
+    },
+    {
+      "id": "blocked_sudo",
+      "label": "sudo",
+      "command": "sudo",
+      "status": "BLOCKED",
+      "risk_level": "HIGH",
+      "reason": "Privilege escalation is not allowed."
+    },
+    {
+      "id": "blocked_chmod",
+      "label": "chmod",
+      "command": "chmod",
+      "status": "BLOCKED",
+      "risk_level": "HIGH",
+      "reason": "Permission changes require explicit human review and are blocked here."
+    },
+    {
+      "id": "blocked_chown",
+      "label": "chown",
+      "command": "chown",
+      "status": "BLOCKED",
+      "risk_level": "HIGH",
+      "reason": "Ownership changes are blocked."
+    },
+    {
+      "id": "blocked_git_push",
+      "label": "git push",
+      "command": "git push",
+      "status": "BLOCKED",
+      "risk_level": "HIGH",
+      "reason": "Publishing requires explicit Chief approval."
+    },
+    {
+      "id": "blocked_git_reset_hard",
+      "label": "git reset --hard",
+      "command": "git reset --hard",
+      "status": "BLOCKED",
+      "risk_level": "HIGH",
+      "reason": "History/worktree destructive reset is blocked."
+    },
+    {
+      "id": "blocked_curl_external",
+      "label": "curl external",
+      "command": "curl <external-url>",
+      "status": "BLOCKED",
+      "risk_level": "HIGH",
+      "reason": "External network calls are blocked."
+    },
+    {
+      "id": "blocked_npm_install",
+      "label": "npm install",
+      "command": "npm install",
+      "status": "BLOCKED",
+      "risk_level": "HIGH",
+      "reason": "Dependency installation requires explicit review."
+    },
+    {
+      "id": "blocked_write_outside_project",
+      "label": "write outside project",
+      "command": "write outside /Users/macbook/ultron",
+      "status": "BLOCKED",
+      "risk_level": "HIGH",
+      "reason": "Protected paths and external project mutation are blocked."
+    }
+  ]
+}

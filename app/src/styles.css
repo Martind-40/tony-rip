@@ -354,6 +354,97 @@ h1 {
   font-weight: 900;
 }
 
+.localBridgePanel {
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid #4c5f86;
+  border-radius: 8px;
+  background: #0b111c;
+}
+
+.localBridgeGrid {
+  display: grid;
+  grid-template-columns: 0.95fr 1.65fr 0.9fr;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.bridgeCommandCard {
+  min-height: 280px;
+}
+
+.bridgeCommandGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.bridgeCommand {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #2f4250;
+  border-radius: 8px;
+  background: #0c1117;
+}
+
+.bridgeCommand strong {
+  color: #ffffff;
+}
+
+.bridgeCommand code {
+  color: #d8e2e8;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.bridgeCommand span {
+  color: #6fffc0;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.bridgeCommand button,
+.blockedCommandList button {
+  min-height: 36px;
+  border: 1px solid #375447;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #12251d;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.bridgeCommand button:hover,
+.blockedCommandList button:hover {
+  border-color: #6fffc0;
+}
+
+.blockedCommandList {
+  display: grid;
+  gap: 8px;
+}
+
+.blockedCommandList button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 40px;
+  padding: 8px 10px;
+  background: #1a1010;
+}
+
+.blockedCommandList span {
+  color: #ffffff;
+}
+
+.blockedCommandList strong {
+  color: #ff9a9a;
+  font-size: 0.76rem;
+}
+
 .actionableOperator {
   margin: 18px 0;
   padding: 18px;
@@ -976,7 +1067,9 @@ h2 {
   .statusStrip,
   .cardGrid,
   .operatorCoreGrid,
+  .localBridgeGrid,
   .safeCommandGrid,
+  .bridgeCommandGrid,
   .operatorModules,
   .operatorForm,
   .counterGrid,

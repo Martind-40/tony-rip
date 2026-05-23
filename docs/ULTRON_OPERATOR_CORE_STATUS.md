@@ -52,6 +52,20 @@ PLANNED.
 
 No MCP server is connected. Candidate tools remain documentation-only.
 
+## Local Command Bridge Status
+
+POLICY_READY_NOT_EXECUTING.
+
+Prepared:
+
+- Bridge policy.
+- Safe command allowlist.
+- Blocked command list.
+- Future command log template.
+- UI bridge request simulation.
+
+No command executes from the UI.
+
 ## Autonomy Status
 
 BLOCKED.

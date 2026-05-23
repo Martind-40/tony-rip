@@ -1,0 +1,43 @@
+{
+  "bridge_status": "DESIGN_READY_NOT_EXECUTING",
+  "execution_mode": "DISABLED_BY_DEFAULT",
+  "public_demo_mode": true,
+  "private_mode_required_for_execution": true,
+  "chief_approval_required": true,
+  "read_before_execute": true,
+  "log_every_action": true,
+  "allowed_command_categories": [
+    "read_project_state",
+    "read_git_state",
+    "run_known_build_check",
+    "inspect_operator_logs",
+    "limited_file_scan"
+  ],
+  "blocked_command_categories": [
+    "destructive_file_operations",
+    "privilege_escalation",
+    "credential_access",
+    "network_installers",
+    "external_api_calls",
+    "git_publish_or_history_rewrite",
+    "protected_project_mutation",
+    "autonomous_loops"
+  ],
+  "protected_paths": [
+    "/Users/macbook/AetherMind",
+    "/Users/macbook/AetherMind/ventures/coco-venture",
+    "/Users/macbook/AetherMind/aethercolony",
+    "/Users/macbook/.ssh",
+    "/Users/macbook/.config",
+    "/Users/macbook/.env",
+    "/Users/macbook/Library"
+  ],
+  "allowed_paths": [
+    "/Users/macbook/ultron"
+  ],
+  "max_runtime_seconds_placeholder": 30,
+  "rollback_required_for_write_actions": true,
+  "no_external_network_calls": true,
+  "no_secret_access": true,
+  "no_autonomous_loop": true
+}

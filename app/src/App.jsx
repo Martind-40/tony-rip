@@ -339,6 +339,61 @@ const safeCommands = [
   }
 ];
 
+const bridgeStatusRows = [
+  { label: "Bridge Status", value: "DESIGN_READY_NOT_EXECUTING" },
+  { label: "Execution Mode", value: "DISABLED_BY_DEFAULT" },
+  { label: "Private Mode Required", value: "YES" },
+  { label: "Chief Approval Required", value: "YES" },
+  { label: "Safe Commands", value: "ALLOWLIST_PREPARED" },
+  { label: "Destructive Commands", value: "BLOCKED" },
+  { label: "External Network Calls", value: "BLOCKED" }
+];
+
+const bridgeSafeCommands = [
+  {
+    label: "Project Path Check",
+    command: "pwd",
+    permission: "READ_ONLY"
+  },
+  {
+    label: "Git Status Review",
+    command: "git status",
+    permission: "READ_ONLY"
+  },
+  {
+    label: "Git Log Review",
+    command: "git log --oneline -5",
+    permission: "READ_ONLY"
+  },
+  {
+    label: "Diff Stat Review",
+    command: "git diff --stat",
+    permission: "READ_ONLY"
+  },
+  {
+    label: "Build Check",
+    command: "npm run build",
+    permission: "SAFE_EXECUTE"
+  },
+  {
+    label: "Limited File Scan",
+    command: "find . -maxdepth 3 -type f",
+    permission: "READ_ONLY"
+  }
+];
+
+const bridgeBlockedCommands = [
+  "rm",
+  "sudo",
+  "chmod",
+  "chown",
+  "git push",
+  "git reset --hard",
+  "curl external",
+  "npm install",
+  "write outside project"
+];
+
 const modelRouterRows = [
   { model: "Local/free model", status: "READY_FOR_DESIGN" },
   { model: "OpenAI", status: "AVAILABLE_LATER" },
@@ -525,6 +580,37 @@ function App() {
     setOperatorActions((current) => [entry, ...current].slice(0, 12));
   }
 
+  function handleBridgeRequest(command) {
+    const result =
+      "Bridge request simulated. Real execution remains disabled until Private Mode and Chief approval.";
+    const entry = {
+      id: createId("BRIDGE"),
+      action: command.label,
+      status: "BRIDGE_MOCK",
+      timestamp: new Date().toLocaleString(),
+      result,
+      risk: "LOW"
+    };
+
+    setLastOperatorResult(result);
+    setOperatorActions((current) => [entry, ...current].slice(0, 12));
+  }
+
+  function handleBlockedBridgeCommand(command) {
+    const result = "Blocked by safety policy.";
+    const entry = {
+      id: createId("BLOCK"),
+      action: command,
+      status: "BLOCKED",
+      timestamp: new Date().toLocaleString(),
+      result,
+      risk: "HIGH"
+    };
+
+    setLastOperatorResult(result);
+    setOperatorActions((current) => [entry, ...current].slice(0, 12));
+  }
+
   return (
     <main className="appShell">
       <header className="terminalBar" aria-label="Operator terminal header">
@@ -675,6 +761,62 @@ function App() {
             <p className="warningText">
               No real integration, destructive autonomy or connected
               credentials are active.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section className="localBridgePanel" aria-labelledby="local-bridge">
+        <div className="sectionIntro">
+          <p className="eyebrow">CONTROLLED EXECUTION PREP</p>
+          <h2 id="local-bridge">Local Command Bridge</h2>
+          <p>
+            Policy-ready bridge design for future safe local commands. This
+            public build only simulates bridge requests and logs them.
+          </p>
+        </div>
+
+        <div className="localBridgeGrid">
+          <article className="operatorCoreCard">
+            <h3>Bridge Policy</h3>
+            <StatusList items={bridgeStatusRows} />
+          </article>
+
+          <article className="operatorCoreCard bridgeCommandCard">
+            <h3>Future Safe Commands</h3>
+            <div className="bridgeCommandGrid">
+              {bridgeSafeCommands.map((command) => (
+                <div className="bridgeCommand" key={command.label}>
+                  <strong>{command.label}</strong>
+                  <code>{command.command}</code>
+                  <span>{command.permission}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleBridgeRequest(command)}
+                  >
+                    Simulate Bridge Request
+                  </button>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <article className="operatorCoreCard">
+            <h3>Blocked Commands</h3>
+            <div className="blockedCommandList">
+              {bridgeBlockedCommands.map((command) => (
+                <button
+                  type="button"
+                  key={command}
+                  onClick={() => handleBlockedBridgeCommand(command)}
+                >
+                  <span>{command}</span>
+                  <strong>BLOCKED</strong>
+                </button>
+              ))}
+            </div>
+            <p className="warningText">
+              Blocked by safety policy. Status: BLOCKED. Risk: HIGH.
             </p>
           </article>
         </div>

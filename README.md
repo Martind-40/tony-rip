@@ -416,6 +416,32 @@ Still blocked:
 
 ---
 
+## Local Command Bridge
+
+Status: POLICY_READY_NOT_EXECUTING
+
+Document created: `docs/ULTRON_LOCAL_COMMAND_BRIDGE_DESIGN.md`
+
+Local Command Bridge is policy-ready but not executing commands.
+
+Prepared:
+
+- `core/local_command_bridge.policy.json`
+- `core/safe_commands.allowlist.json`
+- `memory/operator_command_log_TEMPLATE.md`
+- UI section for bridge status, allowlisted commands and blocked commands.
+
+Still disabled:
+
+- Real terminal execution.
+- Git execution.
+- Build execution from UI.
+- External network calls.
+- Destructive commands.
+- Writes outside ULTRON.
+
+---
+
 ## Operating Mode
 
 Default mode:
@@ -467,6 +493,8 @@ Sprint 15 controlled private mode MVP: complete.
 Sprint 16 actionable operator MVP: ready for review.
 
 ULTRON Functional MVP: ready for review.
+
+Local Command Bridge: policy-ready, execution disabled.
 
 Technical posture: lightweight, local-first, frontend-functional.
 

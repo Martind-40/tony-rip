@@ -58,3 +58,23 @@ Working tree has uncommitted README, UI, CSS and documentation changes. No commi
 ## Recommended Next Step
 
 Design a reviewed local command bridge with a hardcoded allowlist before any real terminal execution is added.
+
+## Local Command Bridge Update
+
+Local Command Bridge is now policy-ready but not executing.
+
+Created:
+
+- `core/local_command_bridge.policy.json`
+- `core/safe_commands.allowlist.json`
+- `memory/operator_command_log_TEMPLATE.md`
+- `docs/ULTRON_LOCAL_COMMAND_BRIDGE_DESIGN.md`
+
+Visible UI:
+
+- Bridge status.
+- Future safe command allowlist.
+- Blocked commands.
+- Simulated bridge requests that write to Action Log.
+
+Execution remains disabled until Private Mode and Chief approval.
