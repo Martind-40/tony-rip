@@ -540,6 +540,29 @@ h2 {
   background: #07110d;
 }
 
+.controlledMvp {
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid #2f4250;
+  border-radius: 8px;
+  background: #101820;
+}
+
+.controlledMvp h3 {
+  margin: 0 0 14px;
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.controlledMvpNote {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #375447;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #07110d;
+}
+
 @media (max-width: 780px) {
   .statusStrip,
   .cardGrid,

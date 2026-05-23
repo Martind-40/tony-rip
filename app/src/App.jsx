@@ -106,6 +106,17 @@ const approvalQueueStatus = [
   { label: "Audit", value: "MOCK_LOGGED" }
 ];
 
+const controlledPrivateModeStatus = [
+  { label: "Private Mode MVP", value: "MOCK_READY" },
+  { label: "Memory", value: "MOCK_ONLY" },
+  { label: "Approval Queue", value: "MOCK_ONLY" },
+  { label: "Audit", value: "MOCK_ONLY" },
+  { label: "Agents", value: "BLOCKED" },
+  { label: "Execution", value: "DISABLED" },
+  { label: "Backend/Auth/APIs", value: "NOT_CONNECTED" },
+  { label: "Real Data", value: "NOT_CONNECTED" }
+];
+
 const mockApprovalRequests = [
   {
     request: "APR-001",
@@ -474,6 +485,16 @@ function App() {
             This approval queue is a mock prototype. No real actions, agents,
             memory writes, backend, APIs, authentication, or private data are
             connected.
+          </p>
+        </div>
+
+        <div className="controlledMvp">
+          <h3>Controlled Private Mode MVP</h3>
+          <StatusList items={controlledPrivateModeStatus} />
+          <p className="controlledMvpNote">
+            Controlled Private Mode MVP is a mock-only integration layer. No
+            real private data, backend, authentication, APIs, memory
+            persistence, autonomous agents, or real execution are active.
           </p>
         </div>
       </section>

@@ -311,6 +311,20 @@ Recommended next sprint: Sprint 15 — Controlled Private Mode MVP.
 
 ---
 
+## Sprint 15 — Controlled Private Mode MVP
+
+Status: COMPLETED / MVP_MOCK_READY
+
+Document created: `docs/SPRINT_15_CONTROLLED_PRIVATE_MODE_MVP.md`
+
+Sprint 15 integrates the Private Architecture Blueprint, Local-Only Private Memory Prototype and Approval Queue Prototype into a controlled mock-only Private Mode MVP.
+
+Everything remains mock/demo: no backend, no auth, no APIs, no real data, no real memory, no real persistence and no autonomous agents.
+
+Recommended next step: Public Demo v1 Final Seal.
+
+---
+
 ## Operating Mode
 
 Default mode:
@@ -355,8 +369,10 @@ Sprint 12 private architecture blueprint: complete.
 
 Sprint 13 local-only private memory prototype: complete.
 
-Sprint 14 approval queue prototype: ready for commit.
+Sprint 14 approval queue prototype: complete.
+
+Sprint 15 controlled private mode MVP: ready for commit.
 
 Technical posture: lightweight, local-first, documentation-first.
 
-Next milestone: controlled private mode MVP.
+Next milestone: public demo v1 final seal.
