@@ -1,0 +1,79 @@
+{
+  "mode": "PUBLIC_DEMO_MODE",
+  "private_mode_status": "not_active",
+  "autonomous_agents_status": "blocked",
+  "default_decision": "BLOCKED",
+  "purpose": "Define safe permission boundaries for proposed ULTRON agents before any functional or autonomous agents are created.",
+  "permission_levels": [
+    {
+      "level": "OBSERVE_ONLY",
+      "description": "Can inspect approved public-safe context only.",
+      "current_status": "allowed_for_design"
+    },
+    {
+      "level": "SUGGEST_ONLY",
+      "description": "Can propose ideas, structure and next steps without acting.",
+      "current_status": "allowed_for_design"
+    },
+    {
+      "level": "DRAFT_ONLY",
+      "description": "Can draft documents, checklists or policies for human review.",
+      "current_status": "allowed_for_design"
+    },
+    {
+      "level": "HUMAN_APPROVED_ACTION",
+      "description": "Can act only after explicit human approval and a manual execution path.",
+      "current_status": "future_only"
+    },
+    {
+      "level": "AUTONOMOUS_ACTION_BLOCKED",
+      "description": "Autonomous execution is not allowed.",
+      "current_status": "blocked"
+    }
+  ],
+  "allowed_now": [
+    "Read public-safe repo documentation",
+    "Propose agent structures",
+    "Generate drafts",
+    "Create checklists",
+    "Suggest future agents",
+    "Flag security risks"
+  ],
+  "prohibited_now": [
+    "Executing real actions",
+    "Sending emails",
+    "Moving sensitive files",
+    "Modifying private data",
+    "Connecting to external tools",
+    "Creating autonomous agents",
+    "Using credentials",
+    "Processing real company data",
+    "Processing personal data"
+  ],
+  "human_approval_required_for": [
+    "Any action beyond draft output",
+    "Any future external tool connection",
+    "Any file modification involving sensitive material",
+    "Any private data handling",
+    "Any agent permission escalation",
+    "Any persistent memory write",
+    "Any knowledge transfer to another project"
+  ],
+  "agent_creation_rules": [
+    "Every agent must have a named purpose",
+    "Every agent must list allowed inputs and outputs",
+    "Every agent must list blocked capabilities",
+    "Every agent must define its maximum permission level",
+    "Every agent must require human approval for actions",
+    "No agent may use credentials in Public Demo Mode",
+    "No agent may execute autonomously"
+  ],
+  "escalation_rules": [
+    "Unknown risk defaults to BLOCKED",
+    "Credential access defaults to BLOCKED",
+    "Private data handling defaults to BLOCKED",
+    "External tool access defaults to NEEDS_REVIEW",
+    "Autonomous execution defaults to BLOCKED",
+    "Destructive action defaults to BLOCKED"
+  ]
+}
