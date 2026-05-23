@@ -1,0 +1,85 @@
+{
+  "mode": "PUBLIC_DEMO_MODE",
+  "private_mode_status": "not_active",
+  "memory_workflow_status": "design_only",
+  "purpose": "Define the future manual workflow for classifying, redacting, approving and storing private knowledge without activating Private Mode.",
+  "allowed_now": [
+    "Document manual private memory workflow",
+    "Create empty templates",
+    "Define redaction and approval rules",
+    "Define classification levels",
+    "Use public-safe placeholder language"
+  ],
+  "prohibited_now": [
+    "Processing real private data",
+    "Storing real private memory",
+    "Adding backend services",
+    "Adding authentication",
+    "Connecting APIs",
+    "Adding Firebase or Supabase",
+    "Creating autonomous agents",
+    "Changing Vercel configuration"
+  ],
+  "intake_steps": [
+    "Human operator submits source manually",
+    "Classify source sensitivity",
+    "Detect sensitive elements",
+    "Block or redact sensitive details",
+    "Extract pure knowledge only",
+    "Human reviews distilled output",
+    "Store only approved output in future private memory"
+  ],
+  "classification_levels": [
+    "PUBLIC",
+    "INTERNAL",
+    "CONFIDENTIAL",
+    "RESTRICTED"
+  ],
+  "review_states": [
+    "BLOCKED",
+    "NEEDS_REDACTION",
+    "READY_FOR_HUMAN_REVIEW",
+    "APPROVED_FOR_PRIVATE_MEMORY",
+    "APPROVED_FOR_KNOWLEDGE_TRANSFER"
+  ],
+  "redaction_required_for": [
+    "Real person names",
+    "Company-specific private facts",
+    "Private figures or metrics",
+    "Customer data",
+    "Legal content",
+    "Salary or financial information",
+    "Private messages",
+    "Internal document excerpts"
+  ],
+  "human_approval_required_for": [
+    "Any non-public source",
+    "Any output stored in private memory",
+    "Any knowledge transfer to AetherMind",
+    "Any knowledge transfer to Coco Venture",
+    "Any knowledge transfer to AetherColony",
+    "Any future automation",
+    "Any connected source or integration"
+  ],
+  "transfer_rules": {
+    "default_status": "blocked",
+    "allowed_only_after_approval": true,
+    "allowed_content": [
+      "Abstract principles",
+      "Reusable frameworks",
+      "Generic checklists",
+      "Patterns of work",
+      "Source-safe lessons"
+    ],
+    "blocked_content": [
+      "Raw source material",
+      "Personal data",
+      "Credentials",
+      "Customer data",
+      "Private metrics",
+      "Internal strategy",
+      "Legal or salary information"
+    ]
+  },
+  "next_phase_recommendation": "Sprint 7 - Human Approval and Redaction QA"
+}
