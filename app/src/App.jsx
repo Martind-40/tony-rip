@@ -33,6 +33,100 @@ const commandCards = [
   }
 ];
 
+const privateStatus = [
+  { label: "Current state", value: "NOT_READY" },
+  { label: "Mode", value: "DESIGN_ONLY" },
+  { label: "Real data access", value: "BLOCKED" },
+  { label: "Backend", value: "NOT_CONNECTED" },
+  { label: "Authentication", value: "NOT_CONNECTED" }
+];
+
+const memoryStatus = [
+  { label: "Status", value: "DESIGN_ONLY" },
+  { label: "Real memory persistence", value: "BLOCKED" },
+  { label: "Human review required", value: "YES" },
+  { label: "Export/import", value: "MOCK_ONLY" }
+];
+
+const approvalGate = [
+  "Every sensitive action requires approval",
+  "No autonomous execution",
+  "No background actions",
+  "No external system control",
+  "No private tool execution"
+];
+
+const futureComponents = [
+  "Private workspace",
+  "Manual memory inbox",
+  "Knowledge distiller",
+  "Approval queue",
+  "Agent permissions panel",
+  "Audit log mock",
+  "Safe export system"
+];
+
+const criticalBoundaries = [
+  "No company data",
+  "No credentials",
+  "No API keys",
+  "No client documents",
+  "No sensitive personal records",
+  "No autonomous agents"
+];
+
+const mvpMatrix = [
+  {
+    component: "Private Mode UI",
+    status: "PREPARED",
+    risk: "Low",
+    next: "Keep demo-safe"
+  },
+  {
+    component: "Manual Memory Workflow",
+    status: "DESIGN_ONLY",
+    risk: "Medium",
+    next: "Needs local/private storage later"
+  },
+  {
+    component: "Agent Permissions",
+    status: "DOCUMENTED",
+    risk: "Medium",
+    next: "Needs approval engine later"
+  },
+  {
+    component: "Backend",
+    status: "BLOCKED",
+    risk: "High",
+    next: "Not allowed in this sprint"
+  },
+  {
+    component: "Auth",
+    status: "BLOCKED",
+    risk: "High",
+    next: "Not allowed in this sprint"
+  },
+  {
+    component: "Real Data Access",
+    status: "BLOCKED",
+    risk: "Critical",
+    next: "Requires future private architecture"
+  }
+];
+
+function StatusList({ items }) {
+  return (
+    <div className="statusList">
+      {items.map((item) => (
+        <div key={item.label}>
+          <span>{item.label}</span>
+          <strong>{item.value}</strong>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function App() {
   return (
     <main className="appShell">
@@ -99,6 +193,80 @@ function App() {
             <p>{card.body}</p>
           </article>
         ))}
+      </section>
+
+      <section className="privateMvp" aria-labelledby="private-mvp-title">
+        <div className="sectionIntro">
+          <p className="eyebrow">SPRINT 8 / PRIVATE MODE MVP PREPARATION</p>
+          <h2 id="private-mvp-title">Private Mode MVP Preparation</h2>
+          <p>
+            Private Mode is being shaped as a future controlled environment.
+            This public build only shows prepared structure, boundaries and
+            approval gates.
+          </p>
+        </div>
+
+        <div className="prepGrid">
+          <article>
+            <h3>Private Mode Status</h3>
+            <StatusList items={privateStatus} />
+          </article>
+          <article>
+            <h3>Manual Private Memory</h3>
+            <StatusList items={memoryStatus} />
+          </article>
+          <article>
+            <h3>Human Approval Gate</h3>
+            <ul>
+              {approvalGate.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </article>
+          <article>
+            <h3>Future MVP Components</h3>
+            <ul>
+              {futureComponents.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </article>
+          <article>
+            <h3>Critical Boundaries</h3>
+            <ul>
+              {criticalBoundaries.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </article>
+        </div>
+
+        <div className="operatorNote">
+          <strong>Operator Note</strong>
+          <p>
+            ULTRON is currently operating in Public Demo Mode. Private Mode is
+            being prepared as a future controlled environment. No real private
+            data, credentials, backend, APIs, or autonomous agents are active in
+            this build.
+          </p>
+        </div>
+
+        <div className="mvpMatrix" aria-label="Private mode MVP matrix">
+          <div className="matrixHeader">
+            <span>Component</span>
+            <span>Current Status</span>
+            <span>Risk</span>
+            <span>Next Step</span>
+          </div>
+          {mvpMatrix.map((row) => (
+            <div className="matrixRow" key={row.component}>
+              <strong>{row.component}</strong>
+              <span>{row.status}</span>
+              <span>{row.risk}</span>
+              <span>{row.next}</span>
+            </div>
+          ))}
+        </div>
       </section>
     </main>
   );

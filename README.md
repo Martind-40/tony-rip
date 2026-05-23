@@ -166,6 +166,40 @@ Complete this checklist before moving from PUBLIC MODE to PRIVATE MODE:
 
 ---
 
+## Sprint 8 — Private Mode MVP Preparation
+
+Sprint 8 adds a public-safe visual structure for the future Private Mode MVP.
+
+Implemented:
+
+- Private Mode status panel.
+- Manual Private Memory readiness panel.
+- Human Approval Gate summary.
+- Future MVP component list.
+- Critical boundary list.
+- Component matrix for prepared, blocked and pending areas.
+
+Still blocked:
+
+- Backend.
+- Authentication.
+- Real data access.
+- Private memory persistence.
+- External APIs.
+- Autonomous agents.
+
+Security limits:
+
+- No company data.
+- No personal data.
+- No credentials or API keys.
+- No client documents.
+- No private tool execution.
+
+Next recommended sprint: Sprint 9 — Public Demo Final QA + Release Closeout.
+
+---
+
 ## Operating Mode
 
 Default mode:

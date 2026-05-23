@@ -241,9 +241,141 @@ h2 {
   color: #d8e2e8;
 }
 
+.privateMvp {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #2f4250;
+  border-radius: 8px;
+  background: #0c1117;
+}
+
+.sectionIntro {
+  max-width: 880px;
+}
+
+.sectionIntro h2 {
+  font-size: 1.45rem;
+}
+
+.sectionIntro p {
+  margin: 12px 0 0;
+  color: #d8e2e8;
+}
+
+.prepGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.prepGrid article {
+  min-height: 180px;
+  padding: 16px;
+  border: 1px solid #2f4250;
+  border-radius: 8px;
+  background: #101820;
+}
+
+.prepGrid h3 {
+  margin: 0 0 14px;
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.prepGrid ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+  color: #d8e2e8;
+}
+
+.statusList {
+  display: grid;
+  gap: 9px;
+}
+
+.statusList div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 34px;
+  border-bottom: 1px solid #1f303c;
+}
+
+.statusList span {
+  color: #9fb2bf;
+  font-size: 0.82rem;
+}
+
+.statusList strong {
+  color: #ffffff;
+  font-size: 0.84rem;
+  text-align: right;
+}
+
+.operatorNote {
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid #375447;
+  border-radius: 8px;
+  background: #07110d;
+}
+
+.operatorNote strong {
+  color: #6fffc0;
+}
+
+.operatorNote p {
+  margin: 8px 0 0;
+  color: #d8e2e8;
+}
+
+.mvpMatrix {
+  display: grid;
+  gap: 1px;
+  margin-top: 14px;
+  overflow: hidden;
+  border: 1px solid #2f4250;
+  border-radius: 8px;
+  background: #2f4250;
+}
+
+.matrixHeader,
+.matrixRow {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr 0.8fr 1.6fr;
+  gap: 1px;
+}
+
+.matrixHeader span,
+.matrixRow span,
+.matrixRow strong {
+  min-height: 46px;
+  padding: 12px;
+  color: #d8e2e8;
+  background: #0c1117;
+  font-size: 0.86rem;
+}
+
+.matrixHeader span {
+  color: #6fffc0;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.matrixRow strong {
+  color: #ffffff;
+}
+
 @media (max-width: 780px) {
   .statusStrip,
-  .cardGrid {
+  .cardGrid,
+  .prepGrid,
+  .matrixHeader,
+  .matrixRow {
     grid-template-columns: 1fr;
   }
 
@@ -265,5 +397,9 @@ h2 {
 
   .cardHeader {
     flex-direction: column;
+  }
+
+  .matrixHeader {
+    display: none;
   }
 }
