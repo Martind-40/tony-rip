@@ -1,0 +1,17 @@
+{
+  "project": "ULTRON",
+  "repo": "Martind-40/tony-rip",
+  "branch": "main",
+  "local_app_path": "/Users/macbook/ultron/app",
+  "build_status": "PASS",
+  "runtime_mode": "DRY_RUN_ONLY",
+  "real_execution_enabled": false,
+  "public_demo_ready": true,
+  "controlled_local_execution_mvp": true,
+  "private_mode_mvp": true,
+  "knowledge_distiller": true,
+  "agent_commander_ui": true,
+  "vercel_issue": "public URL showed tony.RIP instead of ULTRON UI",
+  "expected_fix": "verify Vercel Root Directory / build settings",
+  "release_lock": true
+}

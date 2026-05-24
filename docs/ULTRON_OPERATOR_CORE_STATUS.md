@@ -175,6 +175,29 @@ Still blocked:
 - Automatic transfer to AetherMind, Coco Venture or AetherColony.
 - Real autonomous agents.
 
+## Vercel Deploy Correction Status
+
+DEPLOY_CONFIG_VERIFIED / RELEASE_LOCK_PENDING_FINAL_BROWSER_VERIFICATION.
+
+Prepared:
+
+- Vercel deploy correction block completed.
+- Root `vercel.json` added for repo-root deployment fallback.
+- Preferred Vercel Dashboard mode remains Root Directory `app`.
+- Release lock snapshot created.
+
+Confirmed:
+
+- ULTRON MVP remains security locked.
+- Runtime remains `DRY_RUN_ONLY`.
+- Real browser execution remains disabled.
+- Public demo should render `ULTRON Command Center`.
+
+Open:
+
+- Final browser verification in Vercel Dashboard after redeploy.
+- If `tony-rip.vercel.app` still shows `tony.RIP`, the URL likely belongs to another Vercel project or stale deployment mapping.
+
 ## Autonomy Status
 
 BLOCKED.

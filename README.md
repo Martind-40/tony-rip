@@ -117,6 +117,39 @@ The Vercel config file lives at `app/vercel.json` to match Dashboard Mode. The r
 
 ---
 
+## Vercel Deploy Configuration
+
+ULTRON supports two Vercel configurations.
+
+Preferred option: Vercel Dashboard Mode with `app` as the root:
+
+```text
+Framework Preset: Vite
+Root Directory: app
+Install Command: npm install
+Build Command: npm run build
+Output Directory: dist
+Production Branch: main
+```
+
+Fallback option: repo root with root `vercel.json`:
+
+```text
+Install Command: cd app && npm install
+Build Command: cd app && npm run build
+Output Directory: app/dist
+Framework: vite
+```
+
+If the public URL shows another page, verify that the Vercel project is connected to `Martind-40/tony-rip`, branch `main`, and either:
+
+- Root Directory is set to `app`, or
+- root `vercel.json` is being used.
+
+The deployed page should show `ULTRON Command Center`, not `tony.RIP`.
+
+---
+
 ## Public Demo Mode
 
 The current app is safe to deploy as a public demo.
@@ -599,6 +632,23 @@ Still blocked:
 - Real autonomous agents.
 - Automatic transfer to AetherMind, Coco Venture or AetherColony.
 - Raw sensitive storage.
+
+---
+
+## Vercel Deploy Correction & Release Lock
+
+Status: ULTRON_MVP_RELEASE_LOCKED / DEPLOY_CONFIG_VERIFIED
+
+Document created: `docs/ULTRON_VERCEL_DEPLOY_CORRECTION_AND_RELEASE_LOCK.md`
+
+The local build is correct and the ULTRON UI lives in `/app`. A root `vercel.json` now exists as a fallback for Vercel projects pointed at repo root.
+
+Release lock keeps:
+
+- Runtime mode: `DRY_RUN_ONLY`.
+- Real browser execution: disabled.
+- Backend/auth/API/Firebase/Supabase: inactive.
+- Secrets, network and external projects: blocked.
 
 ---
 
