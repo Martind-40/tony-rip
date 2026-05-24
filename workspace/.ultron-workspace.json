@@ -1,0 +1,21 @@
+{
+  "project": "ULTRON",
+  "version": "v2.2",
+  "workspace_root": "/Users/macbook/ultron/workspace",
+  "folders": {
+    "meetings": { "path": "workspace/meetings", "read": true, "write": false },
+    "photos": { "path": "workspace/photos", "read": true, "write": false },
+    "ideas": { "path": "workspace/ideas", "read": true, "write": true },
+    "reports": { "path": "workspace/reports", "read": true, "write": true },
+    "archive": { "path": "workspace/archive", "read": true, "write": false }
+  },
+  "rules": {
+    "read_outside_workspace": false,
+    "write_outside_reports": false,
+    "delete_files": false,
+    "access_env": false,
+    "require_distillation_before_export": true,
+    "require_human_approval": true
+  },
+  "status": "ULTRON_BLOQUE2_AETHERNOVA_WORKSPACE_READY"
+}
