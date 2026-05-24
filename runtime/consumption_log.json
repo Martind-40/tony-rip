@@ -1,15 +1,26 @@
 {
-  "log": [],
+  "log": [
+    {
+      "approved_by": "router",
+      "provider": "local_rules",
+      "model": "level0",
+      "tokens_used": 0,
+      "cost_estimated": 0,
+      "call_type": "local_rule",
+      "timestamp": "2026-05-24T23:24:24.907Z"
+    }
+  ],
   "summary": {
-    "total_calls": 0,
+    "total_calls": 1,
     "total_tokens": 0,
     "estimated_cost_usd": 0,
-    "calls_today": 0
+    "calls_today": 1,
+    "last_updated": "2026-05-24T23:24:24.907Z"
   },
   "limits": {
     "max_calls_per_day": 50,
     "max_tokens_per_request": 2000,
-    "max_daily_cost_usd": 1.0,
-    "max_monthly_budget_usd": 20.0
+    "max_daily_cost_usd": 1,
+    "max_monthly_budget_usd": 20
   }
 }

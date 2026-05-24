@@ -201,7 +201,17 @@ function localRulesResponse(message) {
 async function routeToAI(message, requestedModel) {
   // Nivel 0 — reglas locales
   const localResponse = localRulesResponse(message);
-  if (localResponse && !requestedModel) return { ok: true, provider: "local_rules", model: "level0", message: localResponse };
+  if (localResponse && !requestedModel) {
+    logConsumption({
+      provider: "local_rules",
+      model: "level0",
+      tokens_used: 0,
+      cost_estimated: 0,
+      call_type: "local_rule",
+      approved_by: "router"
+    });
+    return { ok: true, provider: "local_rules", model: "level0", message: localResponse };
+  }
 
   // Modelo explícito solicitado
   if (requestedModel === "openai") return await callOpenAI(message);
@@ -275,13 +285,16 @@ async function router(req, res) {
 
   // GET /api/health
   if (method === "GET" && url === "/api/health") {
-    const hasAnyKey = !!(OPENAI_KEY || GEMINI_KEY || ANTHROPIC_KEY);
+    const providerReady =
+      (AI_PROVIDER === "openai" && !!OPENAI_KEY) ||
+      (AI_PROVIDER === "gemini" && !!GEMINI_KEY) ||
+      (AI_PROVIDER === "claude" && !!ANTHROPIC_KEY);
     send(res, 200, {
       ok: true, service: "ultron-backend", version: "v1.8",
       mode: "SUPERVISED_AUTONOMY",
       aiProvider: AI_PROVIDER || "none",
-      aiProxy: hasAnyKey ? "READY_WITH_KEY" : "WAITING_FOR_KEY",
-      aiRouter: { provider: AI_PROVIDER || "none", ready: hasAnyKey },
+      aiProxy: providerReady ? "READY_WITH_KEY" : "WAITING_FOR_KEY",
+      aiRouter: { provider: AI_PROVIDER || "none", ready: providerReady },
       router: {
         levels: ["local_rules", "ollama_local_stub", "gemini_flash", "openai_gpt_4o_mini"],
         limits: loadConsumptionLog().limits,
