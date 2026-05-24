@@ -1,20 +1,36 @@
 {
-  "mode": "DRY_RUN_ONLY",
-  "runtime_status": "DRY_RUN_READY",
-  "real_execution_enabled": false,
-  "private_mode_required": true,
-  "chief_approval_required": true,
-  "high_power_controlled_ready_available": true,
-  "chief_confirmation_required": true,
-  "double_confirmation_for_sensitive_actions": true,
-  "allowlist_required": true,
-  "protected_paths_enabled": true,
-  "action_logging_required": true,
-  "external_network_blocked": true,
-  "secrets_blocked": true,
-  "external_projects_blocked": true,
-  "network_blocked": true,
-  "autonomous_loop_blocked": true,
-  "max_runtime_seconds": 10,
-  "allowed_runtime_mode": "DRY_RUN_ONLY"
+  "project": "ULTRON",
+  "version": "v1.2",
+  "mode": "MOBILE_BACKEND_FOUNDATION",
+  "backend": {
+    "type": "node_http_native",
+    "port": 3001,
+    "token": "ULTRON_LOCAL_OPERATOR_TOKEN"
+  },
+  "ai": {
+    "claude_api": "BLOCKED_UNTIL_V1_3",
+    "elevenlabs": "BLOCKED_UNTIL_V1_3",
+    "web_speech_api": "ENABLED_FRONTEND_ONLY"
+  },
+  "execution": {
+    "mode": "DRY_RUN_ONLY",
+    "real_shell_execution": false,
+    "runner_connection": false,
+    "human_approval_required": true
+  },
+  "security": {
+    "external_network": false,
+    "secrets_access": false,
+    "env_access": false,
+    "git_push": false,
+    "autonomous_execution": false
+  },
+  "memory": {
+    "whitelist": [
+      "operator_command_log.md",
+      "v1_1_real_operator_testing_snapshot.json",
+      "runtime_config.json"
+    ]
+  },
+  "status": "ULTRON_V1_2_MOBILE_BACKEND_FOUNDATION_READY"
 }
