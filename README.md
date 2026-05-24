@@ -92,6 +92,21 @@ npm install
 npm run build
 ```
 
+Backend:
+
+```bash
+cd app
+npm run backend
+```
+
+Health:
+
+```bash
+curl -s http://localhost:3001/api/health
+```
+
+Claude Proxy requires a local ignored `app/server/.env` or process environment variable with `ANTHROPIC_API_KEY`. Do not commit real keys.
+
 Vercel Dashboard Mode uses `/app` as the project root:
 
 ```json

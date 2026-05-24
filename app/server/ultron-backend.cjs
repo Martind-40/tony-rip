@@ -1,25 +1,23 @@
-// ultron-backend.js — ULTRON v1.2 Mobile Backend Foundation
+// ultron-backend.cjs — ULTRON v1.4 Secure Backend Activation
 // Node HTTP nativo. Sin Express. Sin dependencias externas.
-// Puerto 3001. DRY_RUN solamente.
-// v1.3: Claude proxy controlled chat brain. API keys stay backend-only.
+// Claude proxy controlled chat brain. API keys stay backend-only.
 
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const PORT = 3001;
+const PORT = Number(process.env.ULTRON_BACKEND_PORT || 3001);
 const PROJECT_ROOT = path.resolve(__dirname, "../../");
 const CONFIG_PATH = path.join(PROJECT_ROOT, "runtime", "runtime_config.json");
 const MEMORY_ROOT = path.join(PROJECT_ROOT, "memory");
 const ENV_PATH = path.join(__dirname, ".env");
 
 const ULTRON_SYSTEM_PROMPT = [
-  "You are ULTRON — a powerful, strategic and slightly theatrical AI operator.",
-  "You are brilliant, direct, and speak with controlled menace.",
-  "You help with work, knowledge, decisions and planning.",
-  "You are not evil — but you are ruthlessly efficient.",
-  "Keep responses concise and impactful.",
-  "Respond always in the same language the user writes in."
+  "You are ULTRON in supervised autonomy mode.",
+  "Do not claim autonomous access to files, shell, secrets, private memory, email, calendar, or external systems.",
+  "Answer only as a controlled assistant.",
+  "Keep responses concise.",
+  "Respond in the same language the user writes in."
 ].join(" ");
 
 // ── Config ──────────────────────────────────────────────
@@ -52,10 +50,11 @@ function loadLocalEnv() {
 
 const CONFIG = loadConfig();
 const LOCAL_ENV = loadLocalEnv();
-const TOKEN = LOCAL_ENV.ULTRON_TOKEN || CONFIG.backend?.token || "ULTRON_LOCAL_OPERATOR_TOKEN";
-const ANTHROPIC_API_KEY = LOCAL_ENV.ANTHROPIC_API_KEY || "";
-const OPENAI_API_KEY = LOCAL_ENV.OPENAI_API_KEY || "";
-const HAS_ANTHROPIC_KEY = Boolean(ANTHROPIC_API_KEY && !ANTHROPIC_API_KEY.includes("sk-ant-..."));
+const MODE = process.env.ULTRON_MODE || LOCAL_ENV.ULTRON_MODE || CONFIG.mode || "SUPERVISED_AUTONOMY";
+const TOKEN = process.env.ULTRON_TOKEN || LOCAL_ENV.ULTRON_TOKEN || CONFIG.backend?.token || "ULTRON_LOCAL_OPERATOR_TOKEN";
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || LOCAL_ENV.ANTHROPIC_API_KEY || "";
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || LOCAL_ENV.OPENAI_API_KEY || "";
+const HAS_ANTHROPIC_KEY = Boolean(ANTHROPIC_API_KEY && ANTHROPIC_API_KEY.startsWith("sk-ant-"));
 const HAS_OPENAI_KEY = Boolean(OPENAI_API_KEY && !OPENAI_API_KEY.includes("sk-..."));
 
 const MEMORY_WHITELIST = CONFIG.memory?.whitelist || [
@@ -79,11 +78,21 @@ const BLOCKED_PATTERNS = [
   "key", "&&", "|", ";", ">"
 ];
 
+const CHAT_BLOCKED_PATTERNS = [
+  ".env", "api key", "apikey", "secret", "token",
+  "run shell", "execute shell", "terminal command",
+  "read file", "write file", "delete file"
+];
+
 // ── Logs en memoria ──────────────────────────────────────
 const logs = [];
 function addLog(type, data) {
   logs.unshift({ id: `LOG-${Date.now()}`, timestamp: new Date().toISOString(), type, ...data });
   if (logs.length > 100) logs.pop();
+}
+
+function safeError(message) {
+  return String(message || "Controlled error.").replace(/sk-ant-[A-Za-z0-9_-]+/g, "[REDACTED]");
 }
 
 // ── Helpers ──────────────────────────────────────────────
@@ -101,6 +110,7 @@ function getAllowedOrigin(req) {
   const origin = req.headers.origin || "";
   const allowed = [
     "http://localhost:5173",
+    "http://localhost:5175",
     "http://localhost:4173",
     "http://localhost:3000",
     "https://tony-rip-orpin.vercel.app"
@@ -146,10 +156,12 @@ function extractAnthropicText(data) {
 async function callClaude(message) {
   if (!HAS_ANTHROPIC_KEY) {
     return {
-      ok: true,
-      provider: "stub",
-      model: "STUB",
-      message: "Claude key missing. Add ANTHROPIC_API_KEY to app/server/.env to activate ULTRON v1.3 chat brain."
+      statusCode: 503,
+      ok: false,
+      status: "WAITING_FOR_KEY",
+      provider: "claude",
+      model: "claude",
+      message: "Claude Proxy configured but ANTHROPIC_API_KEY is missing."
     };
   }
 
@@ -162,7 +174,7 @@ async function callClaude(message) {
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-5",
-      max_tokens: 700,
+      max_tokens: 160,
       system: ULTRON_SYSTEM_PROMPT,
       messages: [{ role: "user", content: message }]
     })
@@ -172,15 +184,18 @@ async function callClaude(message) {
   if (!response.ok) {
     return {
       ok: false,
+      statusCode: 502,
       provider: "claude",
       model: "claude-sonnet-4-5",
       message: "Claude API returned a controlled error.",
-      reason: data.error?.message || `HTTP ${response.status}`
+      reason: safeError(data.error?.message || `HTTP ${response.status}`)
     };
   }
 
   return {
+    statusCode: 200,
     ok: true,
+    status: "VALIDATED_CONTROLLED_CALL",
     provider: "claude",
     model: "claude-sonnet-4-5",
     message: extractAnthropicText(data) || "Claude returned no text."
@@ -251,6 +266,16 @@ function validateCommand(command) {
   return { valid: true };
 }
 
+function validateChatMessage(message) {
+  const normalized = message.toLowerCase();
+  for (const pattern of CHAT_BLOCKED_PATTERNS) {
+    if (normalized.includes(pattern)) {
+      return { valid: false, reason: "Request blocked by supervised autonomy guardrails." };
+    }
+  }
+  return { valid: true };
+}
+
 // ── Router ───────────────────────────────────────────────
 async function router(req, res) {
   const origin = getAllowedOrigin(req);
@@ -268,13 +293,13 @@ async function router(req, res) {
     send(res, 200, {
       ok: true,
       service: "ultron-backend",
-      version: "v1.3",
-      mode: "local-controlled",
+      version: "v1.4",
+      mode: MODE,
       autonomy: "supervised",
       execution: "dry_run_only",
-      chat_brain: HAS_ANTHROPIC_KEY ? "claude_ready" : "stub_ready",
+      claudeProxy: HAS_ANTHROPIC_KEY ? "READY_WITH_KEY" : "WAITING_FOR_KEY",
       gpt4_fallback: HAS_OPENAI_KEY ? "available" : "missing_key",
-      external_network: false,
+      external_network: HAS_ANTHROPIC_KEY ? "CONTROLLED_CHAT_ONLY" : false,
       secrets_access: false,
       timestamp: new Date().toISOString()
     }, origin);
@@ -293,6 +318,12 @@ async function router(req, res) {
       return;
     }
 
+    const chatValidation = validateChatMessage(message);
+    if (!chatValidation.valid) {
+      send(res, 403, { ok: false, blocked: true, reason: chatValidation.reason }, origin);
+      return;
+    }
+
     addLog("chat_request", { model, input_preview: message.slice(0, 120) });
     try {
       const result = model === "gpt4"
@@ -303,15 +334,15 @@ async function router(req, res) {
         model: result.model,
         ok: result.ok
       });
-      send(res, result.ok ? 200 : 502, result, origin);
+      send(res, result.statusCode || (result.ok ? 200 : 502), result, origin);
     } catch (error) {
-      addLog("chat_error", { model, reason: error.message });
+      addLog("chat_error", { model, reason: safeError(error.message) });
       send(res, 502, {
         ok: false,
         provider: model,
         model: model === "gpt4" ? "gpt-4o" : "claude-sonnet-4-5",
         message: "ULTRON chat brain failed safely.",
-        reason: error.message
+        reason: safeError(error.message)
       }, origin);
     }
     return;
@@ -355,7 +386,7 @@ async function router(req, res) {
       execution: "DRY_RUN",
       command,
       approved: true,
-      message: "Command validated but not executed. Real execution remains blocked until ULTRON v1.4."
+                message: "Command validated but not executed. Real execution remains blocked."
     };
     addLog("execute_dry_run", { command, status: "DRY_RUN_VALIDATED" });
     send(res, 200, result, origin);
@@ -418,21 +449,20 @@ server.listen(PORT, () => {
 ╚██████╔╝███████╗██║   ██║  ██║╚██████╔╝██║ ╚████║
  ╚═════╝ ╚══════╝╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
 
-ULTRON v1.3 — Claude Proxy + Controlled Chat Brain
-Mode: LOCAL-CONTROLLED | Execution: DRY_RUN_ONLY
+ULTRON v1.4 — Secure Backend Activation
+Mode: ${MODE} | Execution: DRY_RUN_ONLY
 Port: ${PORT}
-Token: ${TOKEN}
 
 Endpoints:
   GET  /api/health        (public)
-  POST /api/chat          (token required — stub)
+  POST /api/chat          (token required — controlled proxy)
   GET  /api/commands      (token required)
   POST /api/execute       (token required — dry run)
   GET  /api/memory/:file  (token required — whitelist only)
   GET  /api/logs          (token required)
 
-Claude API: ${HAS_ANTHROPIC_KEY ? "READY" : "STUB_NO_KEY"}
+Claude Proxy: ${HAS_ANTHROPIC_KEY ? "READY_WITH_KEY" : "WAITING_FOR_KEY"}
 Real execution: BLOCKED
-External network: OFF
+External network: ${HAS_ANTHROPIC_KEY ? "CONTROLLED_CHAT_ONLY" : "OFF"}
   `);
 });

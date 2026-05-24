@@ -1,16 +1,27 @@
 {
   "project": "ULTRON",
-  "version": "v1.2",
-  "mode": "MOBILE_BACKEND_FOUNDATION",
+  "version": "v1.4",
+  "mode": "SUPERVISED_AUTONOMY",
   "backend": {
     "type": "node_http_native",
     "port": 3001,
-    "token": "ULTRON_LOCAL_OPERATOR_TOKEN"
+    "token": "ULTRON_LOCAL_OPERATOR_TOKEN",
+    "healthEndpoint": "/api/health",
+    "chatEndpoint": "/api/chat",
+    "status": "READY_FOR_SECURE_ACTIVATION"
   },
-  "ai": {
-    "claude_api": "BLOCKED_UNTIL_V1_3",
-    "elevenlabs": "BLOCKED_UNTIL_V1_3",
-    "web_speech_api": "ENABLED_FRONTEND_ONLY"
+  "claudeProxy": {
+    "status": "WAITING_FOR_KEY",
+    "secretSource": "environment_variable",
+    "secretName": "ANTHROPIC_API_KEY",
+    "exposeSecrets": false
+  },
+  "guardrails": {
+    "realShellExecution": false,
+    "gitPush": false,
+    "envAccessFromUI": false,
+    "autonomousAgents": false,
+    "humanApprovalRequired": true
   },
   "execution": {
     "mode": "DRY_RUN_ONLY",
@@ -19,7 +30,7 @@
     "human_approval_required": true
   },
   "security": {
-    "external_network": false,
+    "external_network": "CONTROLLED_CHAT_ONLY_AFTER_KEY",
     "secrets_access": false,
     "env_access": false,
     "git_push": false,
@@ -32,5 +43,5 @@
       "runtime_config.json"
     ]
   },
-  "status": "ULTRON_V1_2_MOBILE_BACKEND_FOUNDATION_READY"
+  "status": "ULTRON_V1_4_READY_FOR_SECURE_CLAUDE_ACTIVATION"
 }

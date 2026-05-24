@@ -172,3 +172,39 @@ Rules:
 - Autonomous agents remain disabled.
 - Chief approval model remains required.
 - Final decision: ULTRON v1.1 READY FOR CONTROLLED DAILY USE
+
+## ULTRON v1.4 — Secure Backend Activation
+
+Fecha: 2026-05-24
+
+Estado: CLOSED_BACKEND_ONLINE_CLAUDE_PROXY_KEY_PRESENT_BUT_INVALID
+
+Comandos ejecutados:
+
+- `git status`
+- `git log --oneline -5`
+- `find . -maxdepth 3 -name ".env*" -print`
+- `git check-ignore .env .env.local .env.production app/server/.env app/.env`
+- secret scan excluding ignored `.env` files
+- `npm install`
+- `npm run build`
+- `npm run backend`
+- `curl -s http://127.0.0.1:3001/api/health`
+- one controlled `POST /api/chat`
+- `npm run dev`
+- `curl -s http://localhost:5173/`
+
+Resultado build: PASS.
+
+Resultado backend: PASS. `/api/health` responded with `ok: true`, `version: v1.4`, `mode: SUPERVISED_AUTONOMY`.
+
+Resultado chat: controlled provider error. One Claude proxy call attempted; provider returned `invalid x-api-key`. No retry executed.
+
+Secret safety: PASS. Local `app/server/.env` exists and is ignored. No key value printed. No `sk-ant-*` secret found in versioned files.
+
+Riesgos:
+
+- Local Claude key is present but invalid or rejected by provider.
+- Vercel secure environment still needs a separate v1.5 validation.
+
+Próximo paso: ULTRON v1.5 — Vercel Secure Environment + Mobile Live Claude Test.

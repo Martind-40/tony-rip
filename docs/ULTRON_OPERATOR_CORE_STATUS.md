@@ -218,6 +218,27 @@ Next:
 
 READY_FOR_CONTROLLED_DAILY_USE.
 
+## ULTRON v1.4 Secure Backend Activation
+
+CLOSED_BACKEND_ONLINE_CLAUDE_PROXY_KEY_PRESENT_BUT_INVALID.
+
+Completed:
+
+- Node HTTP backend reports `v1.4` health on port 3001.
+- Frontend health check consumes `/api/health` and distinguishes backend online, Claude waiting for key and Claude ready states.
+- `/api/chat` is guarded by token, supervised system prompt and blocked chat patterns for secrets, shell and file operations.
+- Runtime config updated to `SUPERVISED_AUTONOMY`.
+- Build passed.
+- Local Claude Proxy attempted one controlled call and failed safely with provider key rejection.
+
+Still blocked:
+
+- Real shell execution.
+- Git push.
+- Autonomous agents.
+- UI access to `.env`.
+- Successful live Claude conversation until a valid Anthropic key is installed.
+
 Confirmed:
 
 - MVP v1 is closed.

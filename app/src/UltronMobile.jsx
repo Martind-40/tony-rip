@@ -87,9 +87,9 @@ function Panel({ title, eyebrow, children, style = {} }) {
   );
 }
 
-function ChatPanel({ backendOnline, activeModel, setActiveModel }) {
+function ChatPanel({ backendOnline, claudeProxy, activeModel, setActiveModel }) {
   const [messages, setMessages] = useState([
-    { role: "system", text: "ULTRON v1.3 — Claude Proxy + Controlled Chat Brain. Use /model claude, /model gpt4 or /clear." }
+    { role: "system", text: "ULTRON v1.4 — Secure Claude Proxy. Use /model claude, /model gpt4 or /clear." }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -134,7 +134,9 @@ function ChatPanel({ backendOnline, activeModel, setActiveModel }) {
         });
         const data = await res.json();
         const label = data.model || data.provider || "STUB";
-        const responseText = data.message || data.reason || "No response.";
+        const responseText = data.status === "WAITING_FOR_KEY"
+          ? "Claude Proxy waiting for secure key."
+          : data.message || data.reason || "No response.";
         setMessages(m => [...m, { role: "ultron", text: `[${label}] ${responseText}` }]);
       } else {
         setMessages(m => [...m, { role: "ultron", text: "Backend offline. Start backend with: npm run backend" }]);
@@ -146,7 +148,7 @@ function ChatPanel({ backendOnline, activeModel, setActiveModel }) {
   }
 
   return (
-    <Panel eyebrow="MODULE 01 / CHAT" title={`OPERATOR CHAT · ${activeModel === "gpt4" ? "GPT4" : "CLAUDE"}`}>
+    <Panel eyebrow="MODULE 01 / CHAT" title={`OPERATOR CHAT · ${activeModel === "gpt4" ? "GPT4" : "CLAUDE"} · ${claudeProxy === "READY_WITH_KEY" ? "READY" : "WAITING FOR KEY"}`}>
       <div style={{
         height: 200, overflowY: "auto", marginBottom: 12,
         background: "#080808", borderRadius: 4, padding: "10px 12px",
@@ -444,16 +446,17 @@ function TaskQueue() {
   );
 }
 
-function SecurityPanel() {
+function SecurityPanel({ claudeProxy }) {
+  const claudeReady = claudeProxy === "READY_WITH_KEY";
   const items = [
-    { label: "External network", value: "OFF", ok: true },
+    { label: "External network", value: claudeReady ? "CONTROLLED" : "OFF", ok: true },
     { label: "Secrets access", value: "OFF", ok: true },
     { label: ".env access", value: "OFF", ok: true },
     { label: "Git push", value: "OFF", ok: true },
     { label: "Real shell execution", value: "OFF", ok: true },
     { label: "Human approval", value: "ON", ok: true },
-    { label: "Claude API", value: "BLOCKED_UNTIL_V1_3", ok: false },
-    { label: "ElevenLabs", value: "BLOCKED_UNTIL_V1_3", ok: false }
+    { label: "Claude API", value: claudeReady ? "READY" : "WAITING_FOR_KEY", ok: claudeReady },
+    { label: "ElevenLabs", value: "BLOCKED", ok: false }
   ];
   return (
     <Panel eyebrow="MODULE 05 / SECURITY" title="GUARDRAILS">
@@ -529,15 +532,20 @@ function MemoryPanel({ backendOnline }) {
 
 export default function UltronMobile() {
   const [backendOnline, setBackendOnline] = useState(false);
+  const [backendHealth, setBackendHealth] = useState(null);
   const [checking, setChecking] = useState(true);
   const [activeModel, setActiveModel] = useState("claude");
+  const claudeProxy = backendHealth?.claudeProxy || "WAITING_FOR_KEY";
 
   const checkHealth = useCallback(async () => {
     try {
       const res = await fetch(`${BACKEND_URL}/api/health`, { signal: AbortSignal.timeout(2000) });
+      const data = await res.json();
       setBackendOnline(res.ok);
+      setBackendHealth(res.ok ? data : null);
     } catch {
       setBackendOnline(false);
+      setBackendHealth(null);
     }
     setChecking(false);
   }, []);
@@ -573,9 +581,12 @@ export default function UltronMobile() {
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ fontSize: 18, fontWeight: 600, color: "#c0392b", letterSpacing: "0.12em" }}>ULTRON</div>
-            <Badge color="gray">v1.3</Badge>
+            <Badge color="gray">v1.4</Badge>
             <Badge color="amber">SUPERVISED AUTONOMY</Badge>
-            <Badge color={backendOnline ? "green" : "gray"}>{backendOnline ? (activeModel === "gpt4" ? "GPT4" : "CLAUDE") : "STUB"}</Badge>
+            <Badge color={backendOnline ? "green" : "gray"}>{backendOnline ? "BACKEND ONLINE" : "BACKEND OFFLINE"}</Badge>
+            <Badge color={claudeProxy === "READY_WITH_KEY" ? "green" : "amber"}>
+              {claudeProxy === "READY_WITH_KEY" ? "CLAUDE READY" : "CLAUDE WAITING FOR KEY"}
+            </Badge>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <StatusDot on={backendOnline} />
@@ -618,7 +629,7 @@ export default function UltronMobile() {
         }}>
           {/* Columna izquierda: chat, voz, comandos */}
           <div>
-            <ChatPanel backendOnline={backendOnline} activeModel={activeModel} setActiveModel={setActiveModel} />
+            <ChatPanel backendOnline={backendOnline} claudeProxy={claudeProxy} activeModel={activeModel} setActiveModel={setActiveModel} />
             <VoicePanel />
             <CommandPanel backendOnline={backendOnline} />
           </div>
@@ -626,7 +637,7 @@ export default function UltronMobile() {
           {/* Columna derecha: tareas, seguridad, memoria */}
           <div>
             <TaskQueue />
-            <SecurityPanel />
+            <SecurityPanel claudeProxy={claudeProxy} />
             <MemoryPanel backendOnline={backendOnline} />
           </div>
         </div>
@@ -640,10 +651,10 @@ export default function UltronMobile() {
           flexWrap: "wrap", gap: 8
         }}>
           <span style={{ fontSize: 10, color: "#c0392b", fontFamily: "'Share Tech Mono', monospace", letterSpacing: "0.08em" }}>
-            ULTRON v1.3 CLAUDE PROXY READY
+            ULTRON v1.4 SECURE BACKEND ACTIVATION
           </span>
           <span style={{ fontSize: 10, color: "#444", fontFamily: "'Share Tech Mono', monospace" }}>
-            NEXT → ULTRON v1.4 — Real Execution + Approval Flow
+            NEXT → ULTRON v1.5 — Vercel Secure Environment + Mobile Live Claude Test
           </span>
         </div>
       </main>
