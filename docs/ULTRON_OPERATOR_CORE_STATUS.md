@@ -198,6 +198,22 @@ Open:
 - Final browser verification in Vercel Dashboard after redeploy.
 - If `tony-rip.vercel.app` still shows `tony.RIP`, the URL likely belongs to another Vercel project or stale deployment mapping.
 
+## MVP v1 Final Operational Closeout
+
+ULTRON_MVP_V1_CLOSED / PUBLIC_DEMO_READY / CONTROLLED_LOCAL_EXECUTION_VERIFIED.
+
+Completed:
+
+- MVP v1 final operational closeout completed.
+- Controlled Local Execution verified.
+- Vercel production verified by operator.
+- `runtime/operator_command_log.md` contains real controlled local execution test logs.
+- Build remains PASS.
+
+Next:
+
+- ULTRON v1.1 — Real Operator Testing requires Chief authorization.
+
 ## Autonomy Status
 
 BLOCKED.

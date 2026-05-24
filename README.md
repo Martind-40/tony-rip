@@ -652,6 +652,43 @@ Release lock keeps:
 
 ---
 
+## ULTRON MVP v1 Operational Closeout
+
+Status: ULTRON_MVP_V1_CLOSED / PUBLIC_DEMO_READY / CONTROLLED_LOCAL_EXECUTION_VERIFIED
+
+Document created: `docs/ULTRON_MVP_V1_FINAL_OPERATIONAL_CLOSEOUT.md`
+
+ULTRON MVP v1 is closed as a public demo and controlled local operator.
+
+Confirmed:
+
+- Vercel is working by operator confirmation.
+- Build passes from `/app`.
+- Controlled Local Execution was tested.
+- The runner allows safe allowlisted commands.
+- The runner blocks dangerous commands.
+- Private Memory is local and Git-ignored.
+- Knowledge Distiller is implemented.
+- Agent Commander UI is implemented.
+
+Verified safe commands:
+
+- `pwd` / path check.
+- `git status`.
+- `git log --oneline -5`.
+
+Verified blocked commands:
+
+- `git push`.
+- `sudo ls`.
+- `rm -rf`.
+- `cat .env`.
+- `curl https://example.com`.
+
+Next stage: ULTRON v1.1 — Real Operator Testing.
+
+---
+
 ## Operating Mode
 
 Default mode:
@@ -719,6 +756,8 @@ Private Mode MVP: local-only memory ready, Git-ignored storage.
 Knowledge Distiller MVP: local deterministic redaction and summary ready.
 
 Agent Commander UI: mock controlled agents ready, no real autonomy.
+
+ULTRON MVP v1: closed operational, public demo ready, controlled local execution verified.
 
 Technical posture: lightweight, local-first, frontend-functional.
 
