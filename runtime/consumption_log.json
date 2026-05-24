@@ -1,0 +1,15 @@
+{
+  "log": [],
+  "summary": {
+    "total_calls": 0,
+    "total_tokens": 0,
+    "estimated_cost_usd": 0,
+    "calls_today": 0
+  },
+  "limits": {
+    "max_calls_per_day": 50,
+    "max_tokens_per_request": 2000,
+    "max_daily_cost_usd": 1.0,
+    "max_monthly_budget_usd": 20.0
+  }
+}

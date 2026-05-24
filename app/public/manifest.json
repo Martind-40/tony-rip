@@ -1,0 +1,25 @@
+{
+  "name": "ULTRON Command Center",
+  "short_name": "ULTRON",
+  "description": "Knowledge Operator, Work Assistant and Agent Commander in supervised autonomy mode.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#07090b",
+  "theme_color": "#07090b",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='34' fill='%2307090b'/%3E%3Cpath d='M45 48h102v25H116v71H76V73H45z' fill='%23ff4b3e'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%2307090b'/%3E%3Cpath d='M118 128h276v68h-86v188H204V196h-86z' fill='%23ff4b3e'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

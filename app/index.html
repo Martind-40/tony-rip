@@ -2,33 +2,35 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="ULTRON public-mode command center for knowledge operations."
-    />
-    <title>ULTRON Command Center</title>
-    <style>
-      body {
-        margin: 0;
-        background: #05070a;
-        color: #ffffff;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      }
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-      .boot-fallback {
-        min-height: 100vh;
-        padding: 32px;
-      }
-    </style>
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#07090b" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="ULTRON" />
+
+    <!-- Icons -->
+    <link
+      rel="apple-touch-icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='34' fill='%2307090b'/%3E%3Cpath d='M45 48h102v25H116v71H76V73H45z' fill='%23ff4b3e'/%3E%3C/svg%3E"
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2307090b'/%3E%3Cpath d='M14 16h36v9H39v24H25V25H14z' fill='%23ff4b3e'/%3E%3C/svg%3E"
+    />
+
+    <!-- SEO -->
+    <meta name="description" content="ULTRON — Knowledge Operator, Work Assistant & Agent Commander" />
+    <meta name="application-name" content="ULTRON" />
+
+    <title>ULTRON</title>
   </head>
   <body>
-    <div id="root">
-      <main class="boot-fallback">
-        <h1>ULTRON Command Center</h1>
-        <p>Public demo mode is loading.</p>
-      </main>
-    </div>
+    <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

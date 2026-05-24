@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "backend": "node server/ultron-backend.cjs"
+    "backend": "node server/ultron-backend.cjs",
+    "pwa:check": "node -e \"const fs=require('fs');const m=JSON.parse(fs.readFileSync('public/manifest.json','utf8'));if(!m.name||!m.start_url||!m.icons?.length)process.exit(1);console.log('PWA manifest OK')\""
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",

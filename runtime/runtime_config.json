@@ -1,56 +1,67 @@
 {
   "project": "ULTRON",
-  "version": "v1.5",
+  "version": "bloque1-v1.8",
   "mode": "SUPERVISED_AUTONOMY",
+  "voice": {
+    "version": "v1.6",
+    "tiers": {
+      "cotidiano": "web_speech_api",
+      "importante": "kokoro_js_prepared",
+      "teatral_clave": "elevenlabs_blocked"
+    },
+    "elevenLabsMaxPerDay": 10,
+    "rawAudioStorage": false
+  },
+  "pwa": {
+    "version": "v1.7",
+    "manifest": "/manifest.json",
+    "installable": true,
+    "mobileFirst": true
+  },
+  "aiRouter": {
+    "version": "v1.8",
+    "levels": {
+      "0": { "provider": "local", "model": "rules-local", "use": "simple_or_status" },
+      "1": { "provider": "ollama", "model": "local-private-stub", "use": "privacy" },
+      "2": { "provider": "gemini", "model": "gemini-flash", "use": "volume_repetitive" },
+      "3": { "provider": "openai", "model": "gpt-4o-mini", "use": "strong_analysis" }
+    },
+    "limits": {
+      "MAX_CALLS_PER_DAY": 50,
+      "MAX_TOKENS_PER_REQUEST": 2000,
+      "MAX_DAILY_COST_USD": 1.0,
+      "MAX_MONTHLY_BUDGET_USD": 20.0
+    }
+  },
   "backend": {
     "type": "node_http_native",
     "port": 3001,
     "token": "ULTRON_LOCAL_OPERATOR_TOKEN",
     "healthEndpoint": "/api/health",
     "chatEndpoint": "/api/chat",
-    "status": "READY_FOR_VERCEL_SECURE_ENVIRONMENT"
-  },
-  "aiProvider": {
-    "default": "openai",
-    "supported": ["openai", "claude"],
-    "selectionSource": "AI_PROVIDER"
-  },
-  "aiProxy": {
-    "status": "WAITING_FOR_VERCEL_ENV",
-    "secretSource": "vercel_environment_variable",
-    "secretNames": ["OPENAI_API_KEY", "ANTHROPIC_API_KEY"],
-    "exposeSecrets": false,
-    "models": {
-      "openai": "gpt-4o-mini",
-      "claude": "claude-sonnet-4-5"
-    }
-  },
-  "guardrails": {
-    "realShellExecution": false,
-    "gitPush": false,
-    "envAccessFromUI": false,
-    "autonomousAgents": false,
-    "humanApprovalRequired": true
-  },
-  "execution": {
-    "mode": "DRY_RUN_ONLY",
-    "real_shell_execution": false,
-    "runner_connection": false,
-    "human_approval_required": true
-  },
-  "security": {
-    "external_network": "CONTROLLED_CHAT_ONLY_AFTER_PROVIDER_KEY",
-    "secrets_access": false,
-    "env_access": false,
-    "git_push": false,
-    "autonomous_execution": false
+    "routerEndpoint": "/api/router",
+    "status": "BLOQUE_1_READY"
   },
   "memory": {
+    "levels": {
+      "0": "session_current",
+      "1": "runtime_logs",
+      "2": "knowledge_distilled_next_block",
+      "3": "ecosystem_blocked_until_v2_4"
+    },
     "whitelist": [
       "operator_command_log.md",
       "v1_1_real_operator_testing_snapshot.json",
       "runtime_config.json"
     ]
   },
-  "status": "ULTRON_V1_5_READY_FOR_VERCEL_ENV_AND_MOBILE_LIVE_TEST"
+  "guardrails": {
+    "realShellExecution": false,
+    "gitPush": false,
+    "envAccessFromUI": false,
+    "autonomousAgents": false,
+    "elevenLabsReal": false,
+    "humanApprovalRequired": true
+  },
+  "status": "ULTRON_BLOQUE_1_CLOSED_READY"
 }
