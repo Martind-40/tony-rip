@@ -531,6 +531,51 @@ Next block: Controlled Local Execution MVP, only if the Chief explicitly authori
 
 ---
 
+## Controlled Local Execution MVP
+
+Status: CONTROLLED_LOCAL_EXECUTION_MVP_READY
+
+Document created: `docs/ULTRON_CONTROLLED_LOCAL_EXECUTION_MVP.md`
+
+ULTRON now includes a local CLI runner for minimal real execution of allowlisted safe commands.
+
+Active only in local terminal:
+
+- `runtime/controlled_local_executor.cjs`
+- `runtime/controlled_local_execution_config.json`
+- `runtime/controlled_local_allowlist.json`
+- `runtime/operator_command_log.md`
+
+Allowed MVP actions:
+
+- Check project path.
+- Limited repo file scan.
+- Review git status.
+- Review git log.
+- Review git diff stat.
+- Run app build check.
+
+Still blocked:
+
+- Browser/UI command execution.
+- Network calls.
+- Secrets and credentials.
+- External projects.
+- Destructive commands.
+- Git push.
+- Autonomous execution.
+
+Example:
+
+```bash
+node runtime/controlled_local_executor.cjs git_status_review \
+  --chief-approve \
+  --reason "Chief approved controlled local status check" \
+  --rollback "Read-only command; no rollback needed"
+```
+
+---
+
 ## Operating Mode
 
 Default mode:
@@ -590,6 +635,8 @@ Operator Runtime Readiness: DRY_RUN_READY, real execution disabled.
 High Power Controlled Bridge: prepared, real execution disabled.
 
 Public Demo Final QA: passed, controlled power closed, real execution no-go.
+
+Controlled Local Execution MVP: local CLI ready, browser execution disabled.
 
 Technical posture: lightweight, local-first, frontend-functional.
 

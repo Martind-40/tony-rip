@@ -531,6 +531,28 @@ const finalQaStatusRows = [
   { label: "Final Decision", value: "NO-GO FOR REAL EXECUTION" }
 ];
 
+const controlledExecutionRows = [
+  { label: "Local CLI Execution", value: "READY" },
+  { label: "Browser Execution", value: "DISABLED" },
+  { label: "Scope", value: "ULTRON ONLY" },
+  { label: "Chief Approval", value: "REQUIRED" },
+  { label: "Command Log", value: "ENABLED" },
+  { label: "Rollback Notes", value: "REQUIRED" },
+  { label: "Shell", value: "DISABLED" },
+  { label: "Network", value: "BLOCKED" },
+  { label: "Secrets", value: "BLOCKED" },
+  { label: "Git Push", value: "BLOCKED" }
+];
+
+const controlledExecutionCommands = [
+  "project_path_check",
+  "repo_file_scan_limited",
+  "git_status_review",
+  "git_log_review",
+  "git_diff_stat_review",
+  "app_build_check"
+];
+
 const modelRouterRows = [
   { model: "Local/free model", status: "READY_FOR_DESIGN" },
   { model: "OpenAI", status: "AVAILABLE_LATER" },
@@ -1093,6 +1115,42 @@ function App() {
           PUBLIC DEMO QA PASSED / CONTROLLED POWER STAGE CLOSED / REAL
           EXECUTION NO-GO.
         </p>
+      </section>
+
+      <section
+        className="controlledExecutionPanel"
+        aria-labelledby="controlled-local-execution"
+      >
+        <div className="sectionIntro">
+          <p className="eyebrow">LOCAL CLI / CONTROLLED EXECUTION MVP</p>
+          <h2 id="controlled-local-execution">
+            Controlled Local Execution MVP
+          </h2>
+          <p>
+            Real local execution is available only through the local allowlisted
+            CLI runner. The public browser UI never executes terminal commands.
+          </p>
+        </div>
+
+        <div className="controlledExecutionGrid">
+          <article className="operatorCoreCard">
+            <h3>Execution Guard</h3>
+            <StatusList items={controlledExecutionRows} />
+          </article>
+
+          <article className="operatorCoreCard">
+            <h3>Allowlisted CLI Commands</h3>
+            <div className="policyPills">
+              {controlledExecutionCommands.map((command) => (
+                <span key={command}>{command}</span>
+              ))}
+            </div>
+            <p className="warningText">
+              Use only from local terminal with Chief approval flags. No UI
+              execution, no secrets, no network and no destructive commands.
+            </p>
+          </article>
+        </div>
       </section>
 
       <section

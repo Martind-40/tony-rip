@@ -1,0 +1,21 @@
+{
+  "mode": "CONTROLLED_LOCAL_EXECUTION_MVP",
+  "scope": "LOCAL_CLI_ONLY",
+  "public_demo_ui_execution_enabled": false,
+  "controlled_local_execution_enabled": true,
+  "working_directory_lock": "/Users/macbook/ultron",
+  "allowed_scope": "ULTRON_PROJECT_ONLY",
+  "chief_confirmation_required": true,
+  "command_log_required": true,
+  "rollback_required": true,
+  "shell_execution_allowed": false,
+  "external_network_allowed": false,
+  "secrets_access_allowed": false,
+  "external_projects_allowed": false,
+  "git_push_allowed": false,
+  "destructive_commands_allowed": false,
+  "autonomous_execution_allowed": false,
+  "max_timeout_ms": 15000,
+  "max_output_chars": 8000,
+  "log_path": "/Users/macbook/ultron/runtime/operator_command_log.md"
+}

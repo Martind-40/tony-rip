@@ -1,0 +1,86 @@
+{
+  "allowlist_status": "CONTROLLED_LOCAL_EXECUTION_MVP_READY",
+  "shell_execution_allowed": false,
+  "commands": [
+    {
+      "id": "project_path_check",
+      "label": "Project Path Check",
+      "type": "builtin",
+      "operation": "pwd",
+      "working_directory": "/Users/macbook/ultron",
+      "risk": "LOW",
+      "permission": "READ_ONLY"
+    },
+    {
+      "id": "repo_file_scan_limited",
+      "label": "Limited Repo File Scan",
+      "type": "builtin",
+      "operation": "limited_file_scan",
+      "working_directory": "/Users/macbook/ultron",
+      "risk": "LOW",
+      "permission": "READ_ONLY"
+    },
+    {
+      "id": "git_status_review",
+      "label": "Git Status Review",
+      "type": "execFile",
+      "executable": "git",
+      "args": ["status", "--short"],
+      "working_directory": "/Users/macbook/ultron",
+      "risk": "LOW",
+      "permission": "READ_ONLY"
+    },
+    {
+      "id": "git_log_review",
+      "label": "Git Log Review",
+      "type": "execFile",
+      "executable": "git",
+      "args": ["log", "--oneline", "-5"],
+      "working_directory": "/Users/macbook/ultron",
+      "risk": "LOW",
+      "permission": "READ_ONLY"
+    },
+    {
+      "id": "git_diff_stat_review",
+      "label": "Git Diff Stat Review",
+      "type": "execFile",
+      "executable": "git",
+      "args": ["diff", "--stat"],
+      "working_directory": "/Users/macbook/ultron",
+      "risk": "LOW",
+      "permission": "READ_ONLY"
+    },
+    {
+      "id": "app_build_check",
+      "label": "App Build Check",
+      "type": "execFile",
+      "executable": "npm",
+      "args": ["run", "build"],
+      "working_directory": "/Users/macbook/ultron/app",
+      "risk": "MEDIUM",
+      "permission": "SAFE_EXECUTE"
+    }
+  ],
+  "blocked_always": [
+    "sudo",
+    "rm",
+    "rm -rf",
+    "chmod",
+    "chown",
+    "git reset --hard",
+    "git push",
+    "curl",
+    "wget",
+    "npm install",
+    "ssh",
+    "scp",
+    "rsync",
+    ".env",
+    ".ssh",
+    "id_rsa",
+    "id_ed25519",
+    "token",
+    "secret",
+    "credential"
+  ]
+}

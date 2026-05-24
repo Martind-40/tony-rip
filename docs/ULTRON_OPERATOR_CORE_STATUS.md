@@ -135,6 +135,27 @@ Confirmed:
 - Private Mode remains not active.
 - Next stage requires explicit Chief authorization.
 
+## Controlled Local Execution MVP Status
+
+CONTROLLED_LOCAL_EXECUTION_MVP_READY.
+
+Active:
+
+- Local CLI allowlisted execution.
+- Chief approval flag required.
+- Command logging to `runtime/operator_command_log.md`.
+- Scope locked to `/Users/macbook/ultron`.
+
+Still blocked:
+
+- Browser execution.
+- External network.
+- Secrets.
+- External projects.
+- Destructive commands.
+- Git push.
+- Autonomous loops.
+
 ## Autonomy Status
 
 BLOCKED.
