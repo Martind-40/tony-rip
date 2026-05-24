@@ -87,9 +87,9 @@ function Panel({ title, eyebrow, children, style = {} }) {
   );
 }
 
-function ChatPanel({ backendOnline }) {
+function ChatPanel({ backendOnline, activeModel, setActiveModel }) {
   const [messages, setMessages] = useState([
-    { role: "system", text: "ULTRON v1.2 — Mobile Backend Foundation. Claude Proxy blocked until v1.3." }
+    { role: "system", text: "ULTRON v1.3 — Claude Proxy + Controlled Chat Brain. Use /model claude, /model gpt4 or /clear." }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -102,6 +102,27 @@ function ChatPanel({ backendOnline }) {
   async function send() {
     const text = input.trim();
     if (!text) return;
+
+    if (text.toLowerCase() === "/clear") {
+      setMessages([{ role: "system", text: "Chat cleared. ULTRON remains in controlled local mode." }]);
+      setInput("");
+      return;
+    }
+
+    if (text.toLowerCase() === "/model claude") {
+      setActiveModel("claude");
+      setMessages(m => [...m, { role: "system", text: "Model switched to CLAUDE." }]);
+      setInput("");
+      return;
+    }
+
+    if (text.toLowerCase() === "/model gpt4") {
+      setActiveModel("gpt4");
+      setMessages(m => [...m, { role: "system", text: "Model switched to GPT4." }]);
+      setInput("");
+      return;
+    }
+
     setMessages(m => [...m, { role: "user", text }]);
     setInput("");
     setLoading(true);
@@ -109,10 +130,12 @@ function ChatPanel({ backendOnline }) {
       if (backendOnline) {
         const res = await authFetch("/api/chat", {
           method: "POST",
-          body: JSON.stringify({ message: text })
+          body: JSON.stringify({ message: text, model: activeModel })
         });
         const data = await res.json();
-        setMessages(m => [...m, { role: "ultron", text: data.message || "No response." }]);
+        const label = data.model || data.provider || "STUB";
+        const responseText = data.message || data.reason || "No response.";
+        setMessages(m => [...m, { role: "ultron", text: `[${label}] ${responseText}` }]);
       } else {
         setMessages(m => [...m, { role: "ultron", text: "Backend offline. Start backend with: npm run backend" }]);
       }
@@ -123,7 +146,7 @@ function ChatPanel({ backendOnline }) {
   }
 
   return (
-    <Panel eyebrow="MODULE 01 / CHAT" title="OPERATOR CHAT">
+    <Panel eyebrow="MODULE 01 / CHAT" title={`OPERATOR CHAT · ${activeModel === "gpt4" ? "GPT4" : "CLAUDE"}`}>
       <div style={{
         height: 200, overflowY: "auto", marginBottom: 12,
         background: "#080808", borderRadius: 4, padding: "10px 12px",
@@ -154,7 +177,7 @@ function ChatPanel({ backendOnline }) {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
-          placeholder="Enter command or message..."
+          placeholder="Message ULTRON, /model claude, /model gpt4, /clear..."
           style={{
             flex: 1, background: "#111", border: "0.5px solid #333",
             borderRadius: 4, padding: "10px 12px", color: "#eee",
@@ -507,6 +530,7 @@ function MemoryPanel({ backendOnline }) {
 export default function UltronMobile() {
   const [backendOnline, setBackendOnline] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [activeModel, setActiveModel] = useState("claude");
 
   const checkHealth = useCallback(async () => {
     try {
@@ -549,8 +573,9 @@ export default function UltronMobile() {
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ fontSize: 18, fontWeight: 600, color: "#c0392b", letterSpacing: "0.12em" }}>ULTRON</div>
-            <Badge color="gray">v1.2</Badge>
+            <Badge color="gray">v1.3</Badge>
             <Badge color="amber">SUPERVISED AUTONOMY</Badge>
+            <Badge color={backendOnline ? "green" : "gray"}>{backendOnline ? (activeModel === "gpt4" ? "GPT4" : "CLAUDE") : "STUB"}</Badge>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <StatusDot on={backendOnline} />
@@ -593,7 +618,7 @@ export default function UltronMobile() {
         }}>
           {/* Columna izquierda: chat, voz, comandos */}
           <div>
-            <ChatPanel backendOnline={backendOnline} />
+            <ChatPanel backendOnline={backendOnline} activeModel={activeModel} setActiveModel={setActiveModel} />
             <VoicePanel />
             <CommandPanel backendOnline={backendOnline} />
           </div>
@@ -615,10 +640,10 @@ export default function UltronMobile() {
           flexWrap: "wrap", gap: 8
         }}>
           <span style={{ fontSize: 10, color: "#c0392b", fontFamily: "'Share Tech Mono', monospace", letterSpacing: "0.08em" }}>
-            ULTRON v1.2 MOBILE BACKEND FOUNDATION READY
+            ULTRON v1.3 CLAUDE PROXY READY
           </span>
           <span style={{ fontSize: 10, color: "#444", fontFamily: "'Share Tech Mono', monospace" }}>
-            NEXT → ULTRON v1.3 — Claude Proxy + Controlled Chat Brain
+            NEXT → ULTRON v1.4 — Real Execution + Approval Flow
           </span>
         </div>
       </main>
