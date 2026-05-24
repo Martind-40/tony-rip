@@ -1,0 +1,31 @@
+{
+  "project": "ULTRON",
+  "version": "v1.5",
+  "status": "LOCAL_BUILD_AND_HEALTH_PASS_READY_FOR_VERCEL_ENV",
+  "base": "ULTRON v1.4 CLOSED / BACKEND_ONLINE / KEY_INVALID",
+  "backend": {
+    "aiProviderSupport": ["openai", "claude"],
+    "defaultProvider": "openai",
+    "openaiModel": "gpt-4o-mini",
+    "claudeModel": "claude-sonnet-4-5",
+    "secretSource": "environment_variables",
+    "secretsExposed": false
+  },
+  "frontend": {
+    "headerStates": ["OPENAI READY", "CLAUDE READY", "WAITING_FOR_KEY"],
+    "backendDetection": "HEALTH_ENDPOINT"
+  },
+  "validation": {
+    "build": "PASS",
+    "localHealth": "PASS_OPENAI_READY_WITH_LOCAL_ENV",
+    "mobileLiveTest": "PENDING_VERCEL_ENV",
+    "vercelEnvConfiguredByChief": false
+  },
+  "guardrails": {
+    "gitPushExecuted": false,
+    "realShellExecutionEnabled": false,
+    "autonomousAgentsEnabled": false,
+    "envAccessFromUI": false
+  },
+  "next": "Chief configures Vercel Dashboard env vars and validates mobile live chat"
+}

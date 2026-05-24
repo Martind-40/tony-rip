@@ -1,4 +1,4 @@
-// ultron-backend.cjs — ULTRON v1.4 Secure Backend Activation
+// ultron-backend.cjs — ULTRON v1.5 Vercel Secure Environment
 // Node HTTP nativo. Sin Express. Sin dependencias externas.
 // Claude proxy controlled chat brain. API keys stay backend-only.
 
@@ -52,10 +52,11 @@ const CONFIG = loadConfig();
 const LOCAL_ENV = loadLocalEnv();
 const MODE = process.env.ULTRON_MODE || LOCAL_ENV.ULTRON_MODE || CONFIG.mode || "SUPERVISED_AUTONOMY";
 const TOKEN = process.env.ULTRON_TOKEN || LOCAL_ENV.ULTRON_TOKEN || CONFIG.backend?.token || "ULTRON_LOCAL_OPERATOR_TOKEN";
+const AI_PROVIDER = normalizeProvider(process.env.AI_PROVIDER || LOCAL_ENV.AI_PROVIDER || CONFIG.aiProvider?.default || "claude");
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || LOCAL_ENV.ANTHROPIC_API_KEY || "";
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || LOCAL_ENV.OPENAI_API_KEY || "";
 const HAS_ANTHROPIC_KEY = Boolean(ANTHROPIC_API_KEY && ANTHROPIC_API_KEY.startsWith("sk-ant-"));
-const HAS_OPENAI_KEY = Boolean(OPENAI_API_KEY && !OPENAI_API_KEY.includes("sk-..."));
+const HAS_OPENAI_KEY = Boolean(OPENAI_API_KEY && OPENAI_API_KEY.startsWith("sk-"));
 
 const MEMORY_WHITELIST = CONFIG.memory?.whitelist || [
   "operator_command_log.md",
@@ -92,7 +93,9 @@ function addLog(type, data) {
 }
 
 function safeError(message) {
-  return String(message || "Controlled error.").replace(/sk-ant-[A-Za-z0-9_-]+/g, "[REDACTED]");
+  return String(message || "Controlled error.")
+    .replace(/sk-ant-[A-Za-z0-9_-]+/g, "[REDACTED]")
+    .replace(/sk-[A-Za-z0-9_-]{12,}/g, "[REDACTED]");
 }
 
 // ── Helpers ──────────────────────────────────────────────
@@ -138,10 +141,22 @@ function parseBody(req) {
   });
 }
 
-function normalizeModel(model) {
-  const requested = String(model || "claude").toLowerCase();
-  if (["gpt4", "gpt-4o", "openai"].includes(requested)) return "gpt4";
+function normalizeProvider(provider) {
+  const requested = String(provider || "claude").toLowerCase();
+  if (["gpt4", "gpt-4o", "gpt-4o-mini", "openai"].includes(requested)) return "openai";
   return "claude";
+}
+
+function providerReady(provider) {
+  return provider === "openai" ? HAS_OPENAI_KEY : HAS_ANTHROPIC_KEY;
+}
+
+function providerStatus(provider) {
+  return providerReady(provider) ? "READY_WITH_KEY" : "WAITING_FOR_KEY";
+}
+
+function selectedProviderStatus() {
+  return providerStatus(AI_PROVIDER);
 }
 
 function extractAnthropicText(data) {
@@ -205,10 +220,12 @@ async function callClaude(message) {
 async function callOpenAI(message) {
   if (!HAS_OPENAI_KEY) {
     return {
-      ok: true,
-      provider: "stub",
-      model: "STUB",
-      message: "OpenAI key missing. Add OPENAI_API_KEY to app/server/.env to activate GPT-4o fallback."
+      statusCode: 503,
+      ok: false,
+      status: "WAITING_FOR_KEY",
+      provider: "openai",
+      model: "gpt-4o-mini",
+      message: "OpenAI Proxy configured but OPENAI_API_KEY is missing."
     };
   }
 
@@ -219,8 +236,8 @@ async function callOpenAI(message) {
       "Authorization": `Bearer ${OPENAI_API_KEY}`
     },
     body: JSON.stringify({
-      model: "gpt-4o",
-      max_tokens: 700,
+      model: "gpt-4o-mini",
+      max_tokens: 160,
       messages: [
         { role: "system", content: ULTRON_SYSTEM_PROMPT },
         { role: "user", content: message }
@@ -232,18 +249,21 @@ async function callOpenAI(message) {
   if (!response.ok) {
     return {
       ok: false,
+      statusCode: 502,
       provider: "openai",
-      model: "gpt-4o",
+      model: "gpt-4o-mini",
       message: "OpenAI API returned a controlled error.",
-      reason: data.error?.message || `HTTP ${response.status}`
+      reason: safeError(data.error?.message || `HTTP ${response.status}`)
     };
   }
 
   return {
+    statusCode: 200,
     ok: true,
+    status: "VALIDATED_CONTROLLED_CALL",
     provider: "openai",
-    model: "gpt-4o",
-    message: data.choices?.[0]?.message?.content || "GPT-4o returned no text."
+    model: "gpt-4o-mini",
+    message: data.choices?.[0]?.message?.content || "OpenAI returned no text."
   };
 }
 
@@ -293,13 +313,15 @@ async function router(req, res) {
     send(res, 200, {
       ok: true,
       service: "ultron-backend",
-      version: "v1.4",
+      version: "v1.5",
       mode: MODE,
       autonomy: "supervised",
       execution: "dry_run_only",
+      aiProvider: AI_PROVIDER,
+      aiProxy: selectedProviderStatus(),
       claudeProxy: HAS_ANTHROPIC_KEY ? "READY_WITH_KEY" : "WAITING_FOR_KEY",
-      gpt4_fallback: HAS_OPENAI_KEY ? "available" : "missing_key",
-      external_network: HAS_ANTHROPIC_KEY ? "CONTROLLED_CHAT_ONLY" : false,
+      openaiProxy: HAS_OPENAI_KEY ? "READY_WITH_KEY" : "WAITING_FOR_KEY",
+      external_network: providerReady(AI_PROVIDER) ? "CONTROLLED_CHAT_ONLY" : false,
       secrets_access: false,
       timestamp: new Date().toISOString()
     }, origin);
@@ -311,7 +333,7 @@ async function router(req, res) {
     if (!requireToken(req, res, origin)) return;
     const body = await parseBody(req);
     const message = String(body.message || "").trim();
-    const model = normalizeModel(body.model);
+    const provider = normalizeProvider(body.provider || body.model || AI_PROVIDER);
 
     if (!message) {
       send(res, 400, { ok: false, blocked: true, reason: "Message is required." }, origin);
@@ -324,9 +346,9 @@ async function router(req, res) {
       return;
     }
 
-    addLog("chat_request", { model, input_preview: message.slice(0, 120) });
+    addLog("chat_request", { provider, input_preview: message.slice(0, 120) });
     try {
-      const result = model === "gpt4"
+      const result = provider === "openai"
         ? await callOpenAI(message)
         : await callClaude(message);
       addLog("chat_response", {
@@ -336,11 +358,11 @@ async function router(req, res) {
       });
       send(res, result.statusCode || (result.ok ? 200 : 502), result, origin);
     } catch (error) {
-      addLog("chat_error", { model, reason: safeError(error.message) });
+      addLog("chat_error", { provider, reason: safeError(error.message) });
       send(res, 502, {
         ok: false,
-        provider: model,
-        model: model === "gpt4" ? "gpt-4o" : "claude-sonnet-4-5",
+        provider,
+        model: provider === "openai" ? "gpt-4o-mini" : "claude-sonnet-4-5",
         message: "ULTRON chat brain failed safely.",
         reason: safeError(error.message)
       }, origin);
@@ -449,7 +471,7 @@ server.listen(PORT, () => {
 ╚██████╔╝███████╗██║   ██║  ██║╚██████╔╝██║ ╚████║
  ╚═════╝ ╚══════╝╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
 
-ULTRON v1.4 — Secure Backend Activation
+ULTRON v1.5 — Vercel Secure Environment
 Mode: ${MODE} | Execution: DRY_RUN_ONLY
 Port: ${PORT}
 
@@ -461,8 +483,11 @@ Endpoints:
   GET  /api/memory/:file  (token required — whitelist only)
   GET  /api/logs          (token required)
 
+AI Provider: ${AI_PROVIDER}
+AI Proxy: ${selectedProviderStatus()}
 Claude Proxy: ${HAS_ANTHROPIC_KEY ? "READY_WITH_KEY" : "WAITING_FOR_KEY"}
+OpenAI Proxy: ${HAS_OPENAI_KEY ? "READY_WITH_KEY" : "WAITING_FOR_KEY"}
 Real execution: BLOCKED
-External network: ${HAS_ANTHROPIC_KEY ? "CONTROLLED_CHAT_ONLY" : "OFF"}
+External network: ${providerReady(AI_PROVIDER) ? "CONTROLLED_CHAT_ONLY" : "OFF"}
   `);
 });

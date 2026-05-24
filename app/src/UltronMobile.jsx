@@ -87,9 +87,9 @@ function Panel({ title, eyebrow, children, style = {} }) {
   );
 }
 
-function ChatPanel({ backendOnline, claudeProxy, activeModel, setActiveModel }) {
+function ChatPanel({ backendOnline, aiStatus, activeModel, setActiveModel }) {
   const [messages, setMessages] = useState([
-    { role: "system", text: "ULTRON v1.4 — Secure Claude Proxy. Use /model claude, /model gpt4 or /clear." }
+    { role: "system", text: "ULTRON v1.5 — Secure AI Proxy. Use /model claude, /model openai or /clear." }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -116,9 +116,9 @@ function ChatPanel({ backendOnline, claudeProxy, activeModel, setActiveModel }) 
       return;
     }
 
-    if (text.toLowerCase() === "/model gpt4") {
-      setActiveModel("gpt4");
-      setMessages(m => [...m, { role: "system", text: "Model switched to GPT4." }]);
+    if (text.toLowerCase() === "/model gpt4" || text.toLowerCase() === "/model openai") {
+      setActiveModel("openai");
+      setMessages(m => [...m, { role: "system", text: "Model switched to OPENAI." }]);
       setInput("");
       return;
     }
@@ -130,12 +130,12 @@ function ChatPanel({ backendOnline, claudeProxy, activeModel, setActiveModel }) 
       if (backendOnline) {
         const res = await authFetch("/api/chat", {
           method: "POST",
-          body: JSON.stringify({ message: text, model: activeModel })
+          body: JSON.stringify({ message: text, provider: activeModel })
         });
         const data = await res.json();
         const label = data.model || data.provider || "STUB";
         const responseText = data.status === "WAITING_FOR_KEY"
-          ? "Claude Proxy waiting for secure key."
+          ? `${(data.provider || activeModel).toUpperCase()} Proxy waiting for secure key.`
           : data.message || data.reason || "No response.";
         setMessages(m => [...m, { role: "ultron", text: `[${label}] ${responseText}` }]);
       } else {
@@ -148,7 +148,7 @@ function ChatPanel({ backendOnline, claudeProxy, activeModel, setActiveModel }) 
   }
 
   return (
-    <Panel eyebrow="MODULE 01 / CHAT" title={`OPERATOR CHAT · ${activeModel === "gpt4" ? "GPT4" : "CLAUDE"} · ${claudeProxy === "READY_WITH_KEY" ? "READY" : "WAITING FOR KEY"}`}>
+    <Panel eyebrow="MODULE 01 / CHAT" title={`OPERATOR CHAT · ${activeModel === "openai" ? "OPENAI" : "CLAUDE"} · ${aiStatus}`}>
       <div style={{
         height: 200, overflowY: "auto", marginBottom: 12,
         background: "#080808", borderRadius: 4, padding: "10px 12px",
@@ -179,7 +179,7 @@ function ChatPanel({ backendOnline, claudeProxy, activeModel, setActiveModel }) 
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
-          placeholder="Message ULTRON, /model claude, /model gpt4, /clear..."
+          placeholder="Message ULTRON, /model claude, /model openai, /clear..."
           style={{
             flex: 1, background: "#111", border: "0.5px solid #333",
             borderRadius: 4, padding: "10px 12px", color: "#eee",
@@ -446,16 +446,17 @@ function TaskQueue() {
   );
 }
 
-function SecurityPanel({ claudeProxy }) {
-  const claudeReady = claudeProxy === "READY_WITH_KEY";
+function SecurityPanel({ aiStatus, aiProvider }) {
+  const aiReady = aiStatus !== "WAITING_FOR_KEY";
   const items = [
-    { label: "External network", value: claudeReady ? "CONTROLLED" : "OFF", ok: true },
+    { label: "External network", value: aiReady ? "CONTROLLED" : "OFF", ok: true },
     { label: "Secrets access", value: "OFF", ok: true },
     { label: ".env access", value: "OFF", ok: true },
     { label: "Git push", value: "OFF", ok: true },
     { label: "Real shell execution", value: "OFF", ok: true },
     { label: "Human approval", value: "ON", ok: true },
-    { label: "Claude API", value: claudeReady ? "READY" : "WAITING_FOR_KEY", ok: claudeReady },
+    { label: "AI provider", value: aiProvider.toUpperCase(), ok: true },
+    { label: "AI proxy", value: aiStatus, ok: aiReady },
     { label: "ElevenLabs", value: "BLOCKED", ok: false }
   ];
   return (
@@ -534,8 +535,13 @@ export default function UltronMobile() {
   const [backendOnline, setBackendOnline] = useState(false);
   const [backendHealth, setBackendHealth] = useState(null);
   const [checking, setChecking] = useState(true);
-  const [activeModel, setActiveModel] = useState("claude");
-  const claudeProxy = backendHealth?.claudeProxy || "WAITING_FOR_KEY";
+  const [activeModel, setActiveModel] = useState("");
+  const aiProvider = backendHealth?.aiProvider || activeModel;
+  const selectedProvider = activeModel || aiProvider || "claude";
+  const aiProxy = backendHealth?.aiProxy || "WAITING_FOR_KEY";
+  const aiStatus = aiProxy === "READY_WITH_KEY"
+    ? `${aiProvider.toUpperCase()} READY`
+    : "WAITING_FOR_KEY";
 
   const checkHealth = useCallback(async () => {
     try {
@@ -581,12 +587,10 @@ export default function UltronMobile() {
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ fontSize: 18, fontWeight: 600, color: "#c0392b", letterSpacing: "0.12em" }}>ULTRON</div>
-            <Badge color="gray">v1.4</Badge>
+            <Badge color="gray">v1.5</Badge>
             <Badge color="amber">SUPERVISED AUTONOMY</Badge>
             <Badge color={backendOnline ? "green" : "gray"}>{backendOnline ? "BACKEND ONLINE" : "BACKEND OFFLINE"}</Badge>
-            <Badge color={claudeProxy === "READY_WITH_KEY" ? "green" : "amber"}>
-              {claudeProxy === "READY_WITH_KEY" ? "CLAUDE READY" : "CLAUDE WAITING FOR KEY"}
-            </Badge>
+            <Badge color={aiProxy === "READY_WITH_KEY" ? "green" : "amber"}>{aiStatus}</Badge>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <StatusDot on={backendOnline} />
@@ -629,7 +633,7 @@ export default function UltronMobile() {
         }}>
           {/* Columna izquierda: chat, voz, comandos */}
           <div>
-            <ChatPanel backendOnline={backendOnline} claudeProxy={claudeProxy} activeModel={activeModel} setActiveModel={setActiveModel} />
+            <ChatPanel backendOnline={backendOnline} aiStatus={aiStatus} activeModel={selectedProvider} setActiveModel={setActiveModel} />
             <VoicePanel />
             <CommandPanel backendOnline={backendOnline} />
           </div>
@@ -637,7 +641,7 @@ export default function UltronMobile() {
           {/* Columna derecha: tareas, seguridad, memoria */}
           <div>
             <TaskQueue />
-            <SecurityPanel claudeProxy={claudeProxy} />
+            <SecurityPanel aiStatus={aiStatus} aiProvider={aiProvider} />
             <MemoryPanel backendOnline={backendOnline} />
           </div>
         </div>
@@ -651,10 +655,10 @@ export default function UltronMobile() {
           flexWrap: "wrap", gap: 8
         }}>
           <span style={{ fontSize: 10, color: "#c0392b", fontFamily: "'Share Tech Mono', monospace", letterSpacing: "0.08em" }}>
-            ULTRON v1.4 SECURE BACKEND ACTIVATION
+            ULTRON v1.5 VERCEL SECURE ENVIRONMENT
           </span>
           <span style={{ fontSize: 10, color: "#444", fontFamily: "'Share Tech Mono', monospace" }}>
-            NEXT → ULTRON v1.5 — Vercel Secure Environment + Mobile Live Claude Test
+            NEXT → Mobile live AI validation after Vercel env is set
           </span>
         </div>
       </main>

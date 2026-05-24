@@ -1,6 +1,6 @@
 {
   "project": "ULTRON",
-  "version": "v1.4",
+  "version": "v1.5",
   "mode": "SUPERVISED_AUTONOMY",
   "backend": {
     "type": "node_http_native",
@@ -8,13 +8,22 @@
     "token": "ULTRON_LOCAL_OPERATOR_TOKEN",
     "healthEndpoint": "/api/health",
     "chatEndpoint": "/api/chat",
-    "status": "READY_FOR_SECURE_ACTIVATION"
+    "status": "READY_FOR_VERCEL_SECURE_ENVIRONMENT"
   },
-  "claudeProxy": {
-    "status": "WAITING_FOR_KEY",
-    "secretSource": "environment_variable",
-    "secretName": "ANTHROPIC_API_KEY",
-    "exposeSecrets": false
+  "aiProvider": {
+    "default": "openai",
+    "supported": ["openai", "claude"],
+    "selectionSource": "AI_PROVIDER"
+  },
+  "aiProxy": {
+    "status": "WAITING_FOR_VERCEL_ENV",
+    "secretSource": "vercel_environment_variable",
+    "secretNames": ["OPENAI_API_KEY", "ANTHROPIC_API_KEY"],
+    "exposeSecrets": false,
+    "models": {
+      "openai": "gpt-4o-mini",
+      "claude": "claude-sonnet-4-5"
+    }
   },
   "guardrails": {
     "realShellExecution": false,
@@ -30,7 +39,7 @@
     "human_approval_required": true
   },
   "security": {
-    "external_network": "CONTROLLED_CHAT_ONLY_AFTER_KEY",
+    "external_network": "CONTROLLED_CHAT_ONLY_AFTER_PROVIDER_KEY",
     "secrets_access": false,
     "env_access": false,
     "git_push": false,
@@ -43,5 +52,5 @@
       "runtime_config.json"
     ]
   },
-  "status": "ULTRON_V1_4_READY_FOR_SECURE_CLAUDE_ACTIVATION"
+  "status": "ULTRON_V1_5_READY_FOR_VERCEL_ENV_AND_MOBILE_LIVE_TEST"
 }
