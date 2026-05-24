@@ -557,6 +557,54 @@ h1 {
   font-size: 0.78rem;
 }
 
+.finalQaPanel {
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid #6f778c;
+  border-radius: 8px;
+  background: #10131a;
+}
+
+.finalQaGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.finalQaGrid div {
+  min-height: 84px;
+  padding: 12px;
+  border: 1px solid #2f4250;
+  border-radius: 8px;
+  background: #0c1117;
+}
+
+.finalQaGrid span {
+  display: block;
+  color: #9fb2bf;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.finalQaGrid strong {
+  display: block;
+  margin-top: 10px;
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.finalQaDecision {
+  margin: 14px 0 0;
+  padding: 13px 14px;
+  border: 1px solid #5c6f48;
+  border-radius: 8px;
+  color: #d9ff8c;
+  background: #10140b;
+  font-weight: 900;
+}
+
 .actionableOperator {
   margin: 18px 0;
   padding: 18px;
@@ -1182,6 +1230,7 @@ h2 {
   .localBridgeGrid,
   .runtimeReadinessGrid,
   .highPowerGrid,
+  .finalQaGrid,
   .safeCommandGrid,
   .bridgeCommandGrid,
   .runtimeActionGrid,

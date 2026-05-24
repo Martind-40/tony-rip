@@ -1,0 +1,22 @@
+{
+  "project": "ULTRON",
+  "stage": "PUBLIC_DEMO_FINAL_QA_CONTROLLED_POWER_CLOSEOUT",
+  "public_demo_mode": true,
+  "runtime_mode": "DRY_RUN_ONLY",
+  "real_execution_enabled": false,
+  "private_mode_active": false,
+  "private_mode_gate_prepared": true,
+  "controlled_local_bridge_prepared": true,
+  "high_power_controlled_bridge_prepared": true,
+  "chief_confirmation_required": true,
+  "double_confirmation_required_for_sensitive_actions": true,
+  "autonomous_agents_enabled": false,
+  "network_access_enabled": false,
+  "secrets_access_enabled": false,
+  "git_push_automatic_enabled": false,
+  "external_projects_access_enabled": false,
+  "backend_enabled": false,
+  "auth_enabled": false,
+  "api_enabled": false,
+  "final_decision": "NO_GO_FOR_REAL_EXECUTION"
+}

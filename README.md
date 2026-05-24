@@ -510,6 +510,27 @@ Every future real action must pass Policy Guard, Approval Queue, explicit Chief 
 
 ---
 
+## Public Demo Final QA & Controlled Power Closeout
+
+Status: PUBLIC_DEMO_QA_PASSED / CONTROLLED_POWER_STAGE_CLOSED / REAL_EXECUTION_NO_GO
+
+Document created: `docs/ULTRON_PUBLIC_DEMO_FINAL_QA_AND_CONTROLLED_POWER_CLOSEOUT.md`
+
+ULTRON is public-demo ready. Controlled power layers are prepared, but runtime remains `DRY_RUN_ONLY` and real execution remains disabled.
+
+Final safety state:
+
+- Private Mode is not active.
+- Chief approval is required before any real local execution.
+- High Power Controlled Bridge is prepared but not enabled.
+- Secrets, network, external projects and destructive commands remain blocked.
+- Backend, auth, APIs, Firebase and Supabase remain inactive.
+- Autonomous agents remain blocked.
+
+Next block: Controlled Local Execution MVP, only if the Chief explicitly authorizes it.
+
+---
+
 ## Operating Mode
 
 Default mode:
@@ -567,6 +588,8 @@ Local Command Bridge: policy-ready, execution disabled.
 Operator Runtime Readiness: DRY_RUN_READY, real execution disabled.
 
 High Power Controlled Bridge: prepared, real execution disabled.
+
+Public Demo Final QA: passed, controlled power closed, real execution no-go.
 
 Technical posture: lightweight, local-first, frontend-functional.
 

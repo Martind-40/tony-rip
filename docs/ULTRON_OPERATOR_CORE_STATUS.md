@@ -122,6 +122,19 @@ Still blocked:
 - Git push.
 - Autonomous execution.
 
+## Public Demo Final QA Status
+
+PUBLIC_DEMO_QA_PASSED / CONTROLLED_POWER_STAGE_CLOSED / REAL_EXECUTION_NO_GO.
+
+Confirmed:
+
+- Public Demo Final QA is prepared.
+- Controlled Power stage is closed.
+- `DRY_RUN_ONLY` remains official.
+- Real execution remains disabled.
+- Private Mode remains not active.
+- Next stage requires explicit Chief authorization.
+
 ## Autonomy Status
 
 BLOCKED.

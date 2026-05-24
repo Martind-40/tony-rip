@@ -514,6 +514,23 @@ const highPowerActions = [
   }
 ];
 
+const finalQaStatusRows = [
+  { label: "Public Demo", value: "READY" },
+  { label: "Repository", value: "PUBLIC" },
+  { label: "Runtime", value: "DRY_RUN_ONLY" },
+  { label: "Real Execution", value: "DISABLED" },
+  { label: "Private Mode", value: "NOT ACTIVE" },
+  { label: "Controlled Bridge", value: "PREPARED" },
+  { label: "High Power Bridge", value: "PREPARED" },
+  { label: "Chief Confirmation", value: "REQUIRED" },
+  { label: "Double Confirmation", value: "REQUIRED" },
+  { label: "Secrets", value: "BLOCKED" },
+  { label: "Network", value: "BLOCKED" },
+  { label: "External Projects", value: "BLOCKED" },
+  { label: "Autonomous Agents", value: "BLOCKED" },
+  { label: "Final Decision", value: "NO-GO FOR REAL EXECUTION" }
+];
+
 const modelRouterRows = [
   { model: "Local/free model", status: "READY_FOR_DESIGN" },
   { model: "OpenAI", status: "AVAILABLE_LATER" },
@@ -1050,6 +1067,32 @@ function App() {
             </p>
           </article>
         </div>
+      </section>
+
+      <section className="finalQaPanel" aria-labelledby="final-qa-status">
+        <div className="sectionIntro">
+          <p className="eyebrow">FINAL QA / CONTROLLED POWER CLOSEOUT</p>
+          <h2 id="final-qa-status">Final QA Status</h2>
+          <p>
+            Public demo is ready and controlled power is closed as
+            preparation-only. Real execution remains a hard no-go until the
+            Chief opens a separate execution gate.
+          </p>
+        </div>
+
+        <div className="finalQaGrid">
+          {finalQaStatusRows.map((item) => (
+            <div key={item.label}>
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+            </div>
+          ))}
+        </div>
+
+        <p className="finalQaDecision">
+          PUBLIC DEMO QA PASSED / CONTROLLED POWER STAGE CLOSED / REAL
+          EXECUTION NO-GO.
+        </p>
       </section>
 
       <section
