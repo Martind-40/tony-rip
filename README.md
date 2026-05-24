@@ -576,6 +576,32 @@ node runtime/controlled_local_executor.cjs git_status_review \
 
 ---
 
+## Private Mode MVP + Knowledge Distiller + Agent Commander
+
+Status: LOCAL_PRIVATE_MVP_AND_AGENT_UI_READY
+
+Documents:
+
+- `docs/ULTRON_PRIVATE_MODE_MVP_LOCAL_MEMORY.md`
+- `docs/ULTRON_KNOWLEDGE_DISTILLER_MVP.md`
+- `docs/ULTRON_AGENT_COMMANDER_UI_MVP.md`
+
+Added:
+
+- Local-only private memory script with Git-ignored storage.
+- Deterministic Knowledge Distiller with basic redaction.
+- Agent Commander UI for mock task assignment and human review.
+
+Still blocked:
+
+- Cloud storage.
+- APIs.
+- Real autonomous agents.
+- Automatic transfer to AetherMind, Coco Venture or AetherColony.
+- Raw sensitive storage.
+
+---
+
 ## Operating Mode
 
 Default mode:
@@ -637,6 +663,12 @@ High Power Controlled Bridge: prepared, real execution disabled.
 Public Demo Final QA: passed, controlled power closed, real execution no-go.
 
 Controlled Local Execution MVP: local CLI ready, browser execution disabled.
+
+Private Mode MVP: local-only memory ready, Git-ignored storage.
+
+Knowledge Distiller MVP: local deterministic redaction and summary ready.
+
+Agent Commander UI: mock controlled agents ready, no real autonomy.
 
 Technical posture: lightweight, local-first, frontend-functional.
 

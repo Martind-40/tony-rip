@@ -156,6 +156,25 @@ Still blocked:
 - Git push.
 - Autonomous loops.
 
+## Private Mode MVP And Agent Commander Status
+
+LOCAL_PRIVATE_MVP_AND_AGENT_UI_READY.
+
+Prepared:
+
+- Local-only private memory storage under Git-ignored `.ultron-private-memory/`.
+- Manual capture script.
+- Deterministic Knowledge Distiller with redaction.
+- Agent Commander UI with mock agents, task assignment and human review.
+
+Still blocked:
+
+- Cloud sync.
+- APIs.
+- Raw sensitive storage.
+- Automatic transfer to AetherMind, Coco Venture or AetherColony.
+- Real autonomous agents.
+
 ## Autonomy Status
 
 BLOCKED.

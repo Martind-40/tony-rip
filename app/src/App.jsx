@@ -4,7 +4,8 @@ const STORAGE_KEYS = {
   tasks: "ultron.demo.tasks",
   knowledge: "ultron.demo.knowledge",
   approvals: "ultron.demo.approvals",
-  operatorActions: "ultron.demo.operatorActions"
+  operatorActions: "ultron.demo.operatorActions",
+  agentTasks: "ultron.demo.agentTasks"
 };
 
 function createId(prefix) {
@@ -553,6 +554,33 @@ const controlledExecutionCommands = [
   "app_build_check"
 ];
 
+const privateModeMvpRows = [
+  { label: "Private Memory", value: "LOCAL_ONLY_READY" },
+  { label: "Storage", value: "GIT_IGNORED_LOCAL" },
+  { label: "Capture", value: "MANUAL_ONLY" },
+  { label: "Raw Sensitive Data", value: "NOT_STORED" },
+  { label: "Distillation", value: "REQUIRED" },
+  { label: "Human Review", value: "REQUIRED" },
+  { label: "Cloud Sync", value: "BLOCKED" },
+  { label: "Cross-Project Transfer", value: "BLOCKED" }
+];
+
+const distillerMvpRows = [
+  { label: "Distiller", value: "LOCAL_READY" },
+  { label: "Model Calls", value: "NONE" },
+  { label: "Redaction", value: "ENABLED" },
+  { label: "Output", value: "PURE_KNOWLEDGE_DRAFT" },
+  { label: "Transfer", value: "HUMAN_APPROVAL_REQUIRED" }
+];
+
+const agentProfiles = [
+  "Memory Assistant",
+  "Knowledge Distiller",
+  "Project Router",
+  "Security Reviewer",
+  "Operator Reporter"
+];
+
 const modelRouterRows = [
   { model: "Local/free model", status: "READY_FOR_DESIGN" },
   { model: "OpenAI", status: "AVAILABLE_LATER" },
@@ -606,6 +634,11 @@ function App() {
   const [operatorActions, setOperatorActions] = useState(() =>
     loadDemoState(STORAGE_KEYS.operatorActions, [])
   );
+  const [agentTaskInput, setAgentTaskInput] = useState("");
+  const [selectedAgent, setSelectedAgent] = useState(agentProfiles[0]);
+  const [agentTasks, setAgentTasks] = useState(() =>
+    loadDemoState(STORAGE_KEYS.agentTasks, [])
+  );
   const [lastOperatorResult, setLastOperatorResult] = useState(
     "No command selected yet."
   );
@@ -625,6 +658,10 @@ function App() {
   useEffect(() => {
     saveDemoState(STORAGE_KEYS.operatorActions, operatorActions);
   }, [operatorActions]);
+
+  useEffect(() => {
+    saveDemoState(STORAGE_KEYS.agentTasks, agentTasks);
+  }, [agentTasks]);
 
   const taskCounts = useMemo(
     () => ({
@@ -796,6 +833,45 @@ function App() {
 
     setLastOperatorResult(action.result);
     setOperatorActions((current) => [entry, ...current].slice(0, 12));
+  }
+
+  function assignAgentTask() {
+    const task = agentTaskInput.trim();
+    if (!task) {
+      return;
+    }
+
+    setAgentTasks((current) => [
+      {
+        id: createId("AG"),
+        agent: selectedAgent,
+        task,
+        status: "ASSIGNED_MOCK",
+        output: "No output generated yet."
+      },
+      ...current
+    ]);
+    setAgentTaskInput("");
+  }
+
+  function generateAgentOutput(id) {
+    setAgentTasks((current) =>
+      current.map((task) =>
+        task.id === id
+          ? {
+              ...task,
+              status: "OUTPUT_READY_FOR_REVIEW",
+              output: `Mock ${task.agent} output: ${task.task.slice(0, 140)}`
+            }
+          : task
+      )
+    );
+  }
+
+  function reviewAgentOutput(id, status) {
+    setAgentTasks((current) =>
+      current.map((task) => (task.id === id ? { ...task, status } : task))
+    );
   }
 
   return (
@@ -1149,6 +1225,118 @@ function App() {
               Use only from local terminal with Chief approval flags. No UI
               execution, no secrets, no network and no destructive commands.
             </p>
+          </article>
+        </div>
+      </section>
+
+      <section className="privateModeMvpPanel" aria-labelledby="private-mode-mvp">
+        <div className="sectionIntro">
+          <p className="eyebrow">LOCAL PRIVATE LAB / MEMORY MVP</p>
+          <h2 id="private-mode-mvp">Private Mode MVP</h2>
+          <p>
+            Local-only private memory is prepared behind Git-ignored storage and
+            manual capture. Public demo remains safe and does not contain
+            private records.
+          </p>
+        </div>
+
+        <div className="privateModeMvpGrid">
+          <article className="operatorCoreCard">
+            <h3>Private Memory Boundary</h3>
+            <StatusList items={privateModeMvpRows} />
+          </article>
+          <article className="operatorCoreCard">
+            <h3>Knowledge Distiller</h3>
+            <StatusList items={distillerMvpRows} />
+            <p className="warningText">
+              Distillation is local and deterministic. No model, API or cloud
+              service is connected.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section className="agentCommanderPanel" aria-labelledby="agent-commander">
+        <div className="sectionIntro">
+          <p className="eyebrow">CONTROLLED AGENTS / HUMAN REVIEW</p>
+          <h2 id="agent-commander">Agent Commander UI</h2>
+          <p>
+            Assign mock tasks to controlled auxiliary agents, generate local
+            placeholder outputs and review them manually. No real agents run.
+          </p>
+        </div>
+
+        <div className="agentCommanderGrid">
+          <article className="operatorCoreCard">
+            <h3>Assign Controlled Task</h3>
+            <div className="operatorForm">
+              <select
+                value={selectedAgent}
+                onChange={(event) => setSelectedAgent(event.target.value)}
+                aria-label="Select controlled agent"
+              >
+                {agentProfiles.map((agent) => (
+                  <option key={agent} value={agent}>
+                    {agent}
+                  </option>
+                ))}
+              </select>
+              <button type="button" onClick={assignAgentTask}>
+                Assign
+              </button>
+            </div>
+            <textarea
+              value={agentTaskInput}
+              onChange={(event) => setAgentTaskInput(event.target.value)}
+              placeholder="Assign a safe non-sensitive mock agent task..."
+              aria-label="Controlled agent task"
+            />
+            <p className="warningText">
+              Mock-only. Do not enter private, client, credential or sensitive
+              data.
+            </p>
+          </article>
+
+          <article className="operatorCoreCard agentTaskCard">
+            <h3>Agent Output Review</h3>
+            <div className="agentTaskList">
+              {agentTasks.length === 0 ? (
+                <p className="emptyState">No controlled agent tasks yet.</p>
+              ) : (
+                agentTasks.map((task) => (
+                  <div className="agentTask" key={task.id}>
+                    <strong>{task.agent}</strong>
+                    <span>{task.status}</span>
+                    <p>{task.task}</p>
+                    <p>{task.output}</p>
+                    <div className="rowActions">
+                      <button
+                        type="button"
+                        onClick={() => generateAgentOutput(task.id)}
+                      >
+                        Generate Mock Output
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          reviewAgentOutput(task.id, "APPROVED_MOCK")
+                        }
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          reviewAgentOutput(task.id, "REJECTED_MOCK")
+                        }
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </article>
         </div>
       </section>

@@ -620,6 +620,74 @@ h1 {
   margin-top: 16px;
 }
 
+.privateModeMvpPanel {
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid #62518c;
+  border-radius: 8px;
+  background: #120f1c;
+}
+
+.privateModeMvpGrid,
+.agentCommanderGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.agentCommanderPanel {
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid #39706a;
+  border-radius: 8px;
+  background: #071715;
+}
+
+.agentCommanderPanel select {
+  min-height: 42px;
+  border: 1px solid #375447;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #071017;
+}
+
+.agentTaskCard {
+  min-height: 360px;
+}
+
+.agentTaskList {
+  display: grid;
+  gap: 10px;
+  max-height: 430px;
+  overflow: auto;
+}
+
+.agentTask {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #263846;
+  border-radius: 8px;
+  background: #0c1117;
+}
+
+.agentTask strong {
+  color: #ffffff;
+}
+
+.agentTask span {
+  color: #6fffc0;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.agentTask p {
+  margin: 0;
+  color: #d8e2e8;
+  overflow-wrap: anywhere;
+}
+
 .actionableOperator {
   margin: 18px 0;
   padding: 18px;
@@ -1247,6 +1315,8 @@ h2 {
   .highPowerGrid,
   .finalQaGrid,
   .controlledExecutionGrid,
+  .privateModeMvpGrid,
+  .agentCommanderGrid,
   .safeCommandGrid,
   .bridgeCommandGrid,
   .runtimeActionGrid,

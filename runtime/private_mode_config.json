@@ -1,0 +1,17 @@
+{
+  "mode": "PRIVATE_MODE_MVP_LOCAL_ONLY",
+  "public_repo_safe": true,
+  "private_memory_directory": "/Users/macbook/ultron/.ultron-private-memory",
+  "private_memory_git_ignored": true,
+  "manual_capture_only": true,
+  "automatic_ingestion_enabled": false,
+  "external_apis_enabled": false,
+  "cloud_sync_enabled": false,
+  "secrets_allowed": false,
+  "raw_sensitive_storage_allowed": false,
+  "knowledge_distillation_required": true,
+  "human_review_required": true,
+  "transfer_to_aethermind_allowed": false,
+  "transfer_to_coco_venture_allowed": false,
+  "transfer_to_aethercolony_allowed": false
+}

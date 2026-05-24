@@ -1,0 +1,23 @@
+{
+  "mode": "AGENT_COMMANDER_UI_MVP",
+  "real_agents_enabled": false,
+  "autonomous_execution_enabled": false,
+  "human_approval_required": true,
+  "allowed_agent_status": ["PROPOSED", "ASSIGNED_MOCK", "OUTPUT_READY_FOR_REVIEW", "APPROVED_MOCK", "REJECTED_MOCK"],
+  "allowed_agent_types": [
+    "Memory Assistant",
+    "Knowledge Distiller",
+    "Project Router",
+    "Security Reviewer",
+    "Operator Reporter"
+  ],
+  "blocked": [
+    "external execution",
+    "email sending",
+    "API calls",
+    "secret access",
+    "private data transfer",
+    "autonomous loops",
+    "file mutation without Chief approval"
+  ]
+}
