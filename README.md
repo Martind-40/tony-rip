@@ -791,3 +791,11 @@ ULTRON v1.1 Real Operator Testing: in progress.
 Technical posture: lightweight, local-first, frontend-functional.
 
 Next milestone: Private Mode Execution Gate review.
+
+## ULTRON v1.1 Final Status
+
+ULTRON v1.1 Real Operator Testing is formally closed and ready for controlled daily use.
+
+The runner remains constrained by allowlist, human approval remains required, and the system still has no external network access, no secrets access, no autonomous agents, and no git push from runner.
+
+Next recommended block: ULTRON v1.2 Work Assistant Layer.
