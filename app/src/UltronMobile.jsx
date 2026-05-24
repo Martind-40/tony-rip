@@ -94,7 +94,7 @@ function ChatPanel({ backendOnline, aiProvider, aiStatus }) {
   return (
     <Panel eyebrow="MODULE 01 / CHAT" title={`Operator Chat · ${aiStatus}`}>
       <div className="providerBar">
-        {["openai", "claude"].map(item => (
+        {["openai", "gemini", "ollama", "claude"].map(item => (
           <button key={item} className={provider === item ? "active" : ""} onClick={() => setProvider(item)}>
             {item.toUpperCase()}
           </button>
@@ -276,7 +276,7 @@ function RouterPanel({ router }) {
         <div><strong>N3</strong><span>gpt-4o-mini</span></div>
       </div>
       <div className="routerBudget">
-        Calls today: {router?.consumption?.callsToday ?? 0} / {router?.limits?.maxCallsPerDay ?? 50}
+        Calls today: {router?.consumption?.calls_today ?? 0} / {router?.limits?.max_calls_per_day ?? 50}
       </div>
     </Panel>
   );

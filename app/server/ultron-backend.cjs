@@ -101,6 +101,7 @@ const AI_PROVIDER = process.env.AI_PROVIDER || "none";
 const OPENAI_KEY = process.env.OPENAI_API_KEY || "";
 const GEMINI_KEY = process.env.GEMINI_API_KEY || "";
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || "";
+const IS_VERCEL = Boolean(process.env.VERCEL);
 
 // System prompt ULTRON
 const ULTRON_SYSTEM = `You are ULTRON — a powerful, strategic and slightly theatrical AI operator.
@@ -198,6 +199,27 @@ function localRulesResponse(message) {
   return null;
 }
 
+function routeOllamaLocal() {
+  if (IS_VERCEL) {
+    return { ok: false, status: "LOCAL_PROVIDER_UNAVAILABLE", message: "Ollama is local/dev only and unavailable in Vercel." };
+  }
+  return {
+    ok: true,
+    provider: "ollama",
+    model: "local-private-stub",
+    message: "Ollama local/dev route prepared. No cloud API call executed."
+  };
+}
+
+function classifyRoute(message) {
+  const m = message.toLowerCase();
+  if (localRulesResponse(message)) return "local";
+  if (m.includes("privad") || m.includes("confidential") || m.includes("local")) return "ollama";
+  if (m.includes("batch") || m.includes("volume") || m.includes("clasifica") || m.includes("repetitivo")) return "gemini";
+  if (m.includes("analiza") || m.includes("analysis") || m.includes("estrategia") || m.includes("strategy")) return "openai";
+  return AI_PROVIDER === "none" ? "local" : AI_PROVIDER;
+}
+
 async function routeToAI(message, requestedModel) {
   // Nivel 0 — reglas locales
   const localResponse = localRulesResponse(message);
@@ -217,12 +239,15 @@ async function routeToAI(message, requestedModel) {
   if (requestedModel === "openai") return await callOpenAI(message);
   if (requestedModel === "gemini") return await callGemini(message);
   if (requestedModel === "claude") return await callClaude(message);
-  if (requestedModel === "ollama") return { ok: false, status: "LOCAL_PROVIDER_UNAVAILABLE", message: "Ollama is only available in local/dev environment." };
+  if (requestedModel === "ollama") return routeOllamaLocal();
 
   // Auto-routing por AI_PROVIDER
-  if (AI_PROVIDER === "openai") return await callOpenAI(message);
-  if (AI_PROVIDER === "gemini") return await callGemini(message);
-  if (AI_PROVIDER === "claude") return await callClaude(message);
+  const routedModel = classifyRoute(message);
+  if (routedModel === "local") return { ok: true, provider: "local_rules", model: "level0", message: localRulesResponse(message) || "Local rule route active. No API call executed." };
+  if (routedModel === "ollama") return routeOllamaLocal();
+  if (routedModel === "openai") return await callOpenAI(message);
+  if (routedModel === "gemini") return await callGemini(message);
+  if (routedModel === "claude") return await callClaude(message);
 
   // Sin provider configurado
   return { ok: false, status: "NO_PROVIDER_CONFIGURED", message: "No AI provider configured. Set AI_PROVIDER in environment. Claude Proxy available in v1.3+." };
