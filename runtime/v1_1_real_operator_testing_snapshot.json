@@ -1,0 +1,20 @@
+{
+  "project": "ULTRON",
+  "version": "v1.1",
+  "block": "REAL_OPERATOR_TESTING",
+  "status": "READY_FOR_CONTROLLED_DAILY_USE",
+  "base_mvp_v1": "CLOSED_OPERATIONAL",
+  "build_base": "PASS",
+  "controlled_local_execution": "VERIFIED",
+  "runner": "runtime/controlled_local_executor.cjs",
+  "safe_write_test": "EXECUTED",
+  "rollback_rehearsal": "EXECUTED",
+  "network_access": false,
+  "secrets_access": false,
+  "git_push_from_runner": false,
+  "autonomous_agents": false,
+  "destructive_commands": false,
+  "chief_approval_required": true,
+  "private_memory_scan_exclusion": "VERIFIED",
+  "final_decision": "ULTRON_V1_1_READY_FOR_CONTROLLED_DAILY_USE"
+}

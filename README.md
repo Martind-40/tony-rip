@@ -689,6 +689,33 @@ Next stage: ULTRON v1.1 — Real Operator Testing.
 
 ---
 
+## ULTRON v1.1 Real Operator Testing
+
+Status: READY_FOR_CONTROLLED_DAILY_USE
+
+Document created: `docs/ULTRON_V1_1_REAL_OPERATOR_TESTING_PROTOCOL.md`
+
+ULTRON is entering controlled real operator testing.
+
+Objective:
+
+- Validate longer operational tasks.
+- Confirm controlled file write behavior.
+- Rehearse rollback.
+- Keep command logs updated.
+- Confirm private memory paths stay excluded from scans.
+
+Safety remains unchanged:
+
+- Runner remains limited by allowlist.
+- No external network.
+- No secrets.
+- No automatic git push.
+- No real autonomous agents.
+- Human/Chief review remains required for execution.
+
+---
+
 ## Operating Mode
 
 Default mode:
@@ -758,6 +785,8 @@ Knowledge Distiller MVP: local deterministic redaction and summary ready.
 Agent Commander UI: mock controlled agents ready, no real autonomy.
 
 ULTRON MVP v1: closed operational, public demo ready, controlled local execution verified.
+
+ULTRON v1.1 Real Operator Testing: in progress.
 
 Technical posture: lightweight, local-first, frontend-functional.
 

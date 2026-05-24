@@ -214,6 +214,23 @@ Next:
 
 - ULTRON v1.1 — Real Operator Testing requires Chief authorization.
 
+## ULTRON v1.1 Real Operator Testing
+
+READY_FOR_CONTROLLED_DAILY_USE.
+
+Confirmed:
+
+- MVP v1 is closed.
+- v1.1 testing opened.
+- Controlled longer operation testing is in progress.
+- Rollback rehearsal is required and has been executed for the write test.
+- Longer repo scan, diff stat review and build check executed through the controlled runner.
+- Private memory path exclusion was tightened and verified.
+- Chief approval is still required.
+- No autonomous agents enabled.
+- No external network enabled.
+- No secret access enabled.
+
 ## Autonomy Status
 
 BLOCKED.

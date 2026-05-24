@@ -21,7 +21,7 @@ function collectFiles(dir, depth = 0, maxDepth = 3, output = []) {
   }
 
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if ([".git", "node_modules", "dist"].includes(entry.name)) {
+    if ([".git", ".ultron-private-memory", "node_modules", "dist"].includes(entry.name)) {
       continue;
     }
 
