@@ -618,6 +618,91 @@ async function router(req, res) {
     return;
   }
 
+
+  // POST /api/meeting/process
+  if (method === "POST" && url === "/api/meeting/process") {
+    if (!requireToken(req, res, origin)) return;
+    const body = await parseBody(req);
+    const { title, notes, save } = body;
+
+    if (!notes || !notes.trim()) {
+      send(res, 400, { ok: false, reason: "notes required." }, origin);
+      return;
+    }
+
+    // Sensitivity check
+    const SENSITIVE = [/\bpassword\b/gi, /\bcontraseña\b/gi, /\btoken\b/gi, /sk-[a-zA-Z0-9]+/g, /api[_-]?key/gi];
+    const found = SENSITIVE.flatMap(p => notes.match(p) || []);
+    if (found.length > 0) {
+      send(res, 403, { ok: false, blocked: true, reason: "Sensitive data detected. Remove before processing.", detected: found.slice(0, 3) }, origin);
+      return;
+    }
+
+    const meetingPrompt = `You are ULTRON — a precise knowledge operator analyzing meeting notes.
+
+Extract and structure the following from these meeting notes:
+
+1. EXECUTIVE SUMMARY (3-5 sentences, key outcomes only)
+2. DECISIONS MADE (bullet list, specific decisions taken)
+3. ACTION ITEMS (bullet list, format: task - responsible person if mentioned - deadline if mentioned)
+4. RISKS IDENTIFIED (bullet list, issues or blockers mentioned)
+5. NEXT STEPS (bullet list, immediate follow-up actions)
+6. OPEN QUESTIONS (bullet list, unresolved questions)
+
+Meeting title: ${title || "Untitled Meeting"}
+Date: ${new Date().toISOString().split("T")[0]}
+
+Meeting notes:
+${notes.slice(0, 2000)}
+
+Respond in the same language as the meeting notes. Be concise and actionable. Use the exact section headers above.`;
+
+    let result = null;
+    let provider = "local";
+
+    try {
+      const aiResult = await routeToAI(meetingPrompt, null);
+      if (aiResult.ok) {
+        result = aiResult.message;
+        provider = aiResult.provider;
+      }
+    } catch { /* fall through to local */ }
+
+    // Local fallback extraction
+    if (!result) {
+      const lines = notes.split(/[\n.!?]+/).filter(l => l.trim().length > 10);
+      const tasks = lines.filter(l => /\b(hacer|do|task|tarea|completar|revisar|enviar|crear|check|follow|asignar|assign)\b/i.test(l)).slice(0, 5);
+      const decisions = lines.filter(l => /\b(decidimos|decided|acordamos|agreed|confirmamos|confirmed|aprobamos|approved)\b/i.test(l)).slice(0, 3);
+      const risks = lines.filter(l => /\b(riesgo|risk|problema|issue|blocker|bloqueo|concern|preocupación)\b/i.test(l)).slice(0, 3);
+      const questions = lines.filter(l => /\?/.test(l)).slice(0, 3);
+
+      result = `## EXECUTIVE SUMMARY\n${lines.slice(0, 3).join(". ").slice(0, 400)}\n\n## DECISIONS MADE\n${decisions.length ? decisions.map(d => "- " + d.trim()).join("\n") : "- No explicit decisions detected"}\n\n## ACTION ITEMS\n${tasks.length ? tasks.map(t => "- " + t.trim()).join("\n") : "- No action items detected"}\n\n## RISKS IDENTIFIED\n${risks.length ? risks.map(r => "- " + r.trim()).join("\n") : "- No risks detected"}\n\n## NEXT STEPS\n${tasks.slice(0, 2).map(t => "- " + t.trim()).join("\n") || "- Review and assign action items"}\n\n## OPEN QUESTIONS\n${questions.length ? questions.map(q => "- " + q.trim()).join("\n") : "- None detected"}`;
+      provider = "local_extraction";
+    }
+
+    // Save to workspace/meetings/ if requested
+    let savedFile = null;
+    if (save) {
+      try {
+        const meetingsPath = path.join(PROJECT_ROOT, "workspace", "meetings");
+        if (!fs.existsSync(meetingsPath)) fs.mkdirSync(meetingsPath, { recursive: true });
+        const date = new Date().toISOString().split("T")[0];
+        const slug = (title || "meeting").toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 30);
+        const filename = `${date}-${slug}.md`;
+        const filePath = path.join(meetingsPath, filename);
+        const fileContent = `# ${title || "Meeting"} — ${date}\n\n${result}\n\n---\n*Processed by ULTRON v2.7 — ${provider}*\n`;
+        fs.writeFileSync(filePath, fileContent);
+        savedFile = filename;
+      } catch (e) {
+        savedFile = null;
+      }
+    }
+
+    addLog("meeting_process", { title, provider, saved: !!savedFile });
+    send(res, 200, { ok: true, provider, title, date: new Date().toISOString().split("T")[0], result, savedFile }, origin);
+    return;
+  }
+
   send(res, 404, { ok: false, reason: "Endpoint not found." }, origin);
 }
 
