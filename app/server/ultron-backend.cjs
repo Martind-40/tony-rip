@@ -985,6 +985,163 @@ Return only the distilled knowledge:`;
     return;
   }
 
+
+  // ── AGENTS QUEUE ─────────────────────────────────────────
+  const AGENTS_PATH = path.join(PROJECT_ROOT, "runtime", "agents_queue.json");
+  const ALLOWED_AGENT_ACTIONS = ["summarize_meeting", "distill_knowledge", "create_report", "read_workspace_file", "add_task"];
+  const BLOCKED_AGENT_ACTIONS = ["shell_exec", "git_push", "delete_file", "send_email", "access_credentials"];
+  const AGENT_STATUS_FLOW = { DRAFT: "PENDING_APPROVAL", PENDING_APPROVAL: "APPROVED", APPROVED: "EXECUTING", EXECUTING: "DONE" };
+
+  function loadAgents() {
+    try { return fs.existsSync(AGENTS_PATH) ? JSON.parse(fs.readFileSync(AGENTS_PATH, "utf8")) : []; }
+    catch { return []; }
+  }
+
+  function saveAgents(agents) {
+    try {
+      if (!fs.existsSync(path.dirname(AGENTS_PATH))) fs.mkdirSync(path.dirname(AGENTS_PATH), { recursive: true });
+      fs.writeFileSync(AGENTS_PATH, JSON.stringify(agents, null, 2));
+    } catch { /* best effort */ }
+  }
+
+  // GET /api/agents/list
+  if (method === "GET" && url === "/api/agents/list") {
+    if (!requireToken(req, res, origin)) return;
+    const agents = loadAgents();
+    send(res, 200, { ok: true, count: agents.length, agents }, origin);
+    return;
+  }
+
+  // POST /api/agents/create
+  if (method === "POST" && url === "/api/agents/create") {
+    if (!requireToken(req, res, origin)) return;
+    const body = await parseBody(req);
+    const { name, type, task, action, risk } = body;
+
+    if (!name || !task || !action) {
+      send(res, 400, { ok: false, reason: "name, task, action required." }, origin);
+      return;
+    }
+
+    if (!ALLOWED_AGENT_ACTIONS.includes(action)) {
+      send(res, 403, { ok: false, blocked: true, reason: `Action '${action}' not in allowlist.` }, origin);
+      return;
+    }
+
+    const agent = {
+      id: `AGT-${Date.now().toString(36).toUpperCase()}`,
+      name, type: type || "task_agent", task, action,
+      risk: risk || "LOW", status: "DRAFT",
+      requires_approval: true,
+      created: new Date().toISOString(),
+      updated: new Date().toISOString(),
+      result: null
+    };
+
+    const agents = loadAgents();
+    agents.unshift(agent);
+    saveAgents(agents);
+    addLog("agent_create", { id: agent.id, name, action });
+    send(res, 200, { ok: true, agent }, origin);
+    return;
+  }
+
+  // POST /api/agents/:id/update
+  if (method === "POST" && url.match(/^\/api\/agents\/[^/]+\/update$/)) {
+    if (!requireToken(req, res, origin)) return;
+    const agentId = url.split("/")[3];
+    const body = await parseBody(req);
+    const { status } = body;
+
+    const VALID_STATUSES = ["DRAFT", "PENDING_APPROVAL", "APPROVED", "BLOCKED", "DONE"];
+    if (!VALID_STATUSES.includes(status)) {
+      send(res, 400, { ok: false, reason: `Invalid status: ${status}` }, origin);
+      return;
+    }
+
+    const agents = loadAgents();
+    const idx = agents.findIndex(a => a.id === agentId);
+    if (idx === -1) { send(res, 404, { ok: false, reason: "Agent not found." }, origin); return; }
+
+    agents[idx].status = status;
+    agents[idx].updated = new Date().toISOString();
+    saveAgents(agents);
+    addLog("agent_update", { id: agentId, status });
+    send(res, 200, { ok: true, agent: agents[idx] }, origin);
+    return;
+  }
+
+  // POST /api/agents/:id/execute
+  if (method === "POST" && url.match(/^\/api\/agents\/[^/]+\/execute$/)) {
+    if (!requireToken(req, res, origin)) return;
+    const agentId = url.split("/")[3];
+
+    const agents = loadAgents();
+    const idx = agents.findIndex(a => a.id === agentId);
+    if (idx === -1) { send(res, 404, { ok: false, reason: "Agent not found." }, origin); return; }
+
+    const agent = agents[idx];
+    if (agent.status !== "APPROVED") {
+      send(res, 403, { ok: false, blocked: true, reason: `Agent must be APPROVED to execute. Current: ${agent.status}` }, origin);
+      return;
+    }
+
+    if (BLOCKED_AGENT_ACTIONS.includes(agent.action)) {
+      send(res, 403, { ok: false, blocked: true, reason: `Action '${agent.action}' is blocked by policy.` }, origin);
+      return;
+    }
+
+    // Set to EXECUTING
+    agents[idx].status = "EXECUTING";
+    agents[idx].updated = new Date().toISOString();
+    saveAgents(agents);
+
+    let result = "";
+    let provider = "local";
+
+    try {
+      const prompt = `You are ULTRON supervised agent executing a controlled task.
+Agent: ${agent.name}
+Action: ${agent.action}
+Task: ${agent.task}
+
+Execute in supervised mode. Provide a brief execution report (2-4 sentences).
+Do not claim access to shell, credentials, or external systems.
+Respond in the same language as the task description.`;
+
+      const aiResult = await routeToAI(prompt, null);
+      if (aiResult.ok) { result = aiResult.message; provider = aiResult.provider; }
+      else { result = `[DRY_RUN] Action '${agent.action}' validated and simulated for: "${agent.task}". No real execution performed.`; }
+    } catch {
+      result = `[DRY_RUN] ${agent.action} simulated. Real execution blocked until v2.3+ with full backend.`;
+    }
+
+    // Set to DONE
+    agents[idx].status = "DONE";
+    agents[idx].result = result;
+    agents[idx].provider = provider;
+    agents[idx].executedAt = new Date().toISOString();
+    agents[idx].updated = new Date().toISOString();
+    saveAgents(agents);
+
+    addLog("agent_execute", { id: agentId, action: agent.action, provider });
+    send(res, 200, { ok: true, agent: agents[idx], result, provider }, origin);
+    return;
+  }
+
+  // DELETE /api/agents/:id
+  if (method === "DELETE" && url.match(/^\/api\/agents\/[^/]+$/)) {
+    if (!requireToken(req, res, origin)) return;
+    const agentId = url.split("/")[3];
+    const agents = loadAgents();
+    const filtered = agents.filter(a => a.id !== agentId);
+    if (filtered.length === agents.length) { send(res, 404, { ok: false, reason: "Agent not found." }, origin); return; }
+    saveAgents(filtered);
+    addLog("agent_delete", { id: agentId });
+    send(res, 200, { ok: true, message: "Agent deleted." }, origin);
+    return;
+  }
+
   send(res, 404, { ok: false, reason: "Endpoint not found." }, origin);
 }
 
