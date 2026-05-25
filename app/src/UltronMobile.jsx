@@ -5,6 +5,7 @@ import KnowledgePanel from "./KnowledgePanel";
 import AgentsPanel from "./AgentsPanel";
 import EcosystemPanel from "./EcosystemPanel";
 import VoiceCompanion from "./VoiceCompanion";
+import PhotoPanel from "./PhotoPanel";
 
 const BACKEND_URL = "http://localhost:3001";
 const TOKEN = "ULTRON_LOCAL_OPERATOR_TOKEN";
@@ -122,7 +123,8 @@ const TABS = [
   { id: "agents", label: "AGT", icon: "🤖" },
   { id: "ecosystem", label: "ECO", icon: "🔀" },
   { id: "voice", label: "VOICE", icon: "🥽" },
-  { id: "tools", label: "TOOLS", icon: "🔧" }
+  { id: "tools", label: "TOOLS", icon: "🔧" },
+  { id: "photo", label: "PHOTO", icon: "📷" }
 ];
 
 // ── Chat Panel ─────────────────────────────────────────────
@@ -374,6 +376,7 @@ export default function UltronMobile() {
         {activeTab === "ecosystem" && <EcosystemPanel />}
         {activeTab === "voice" && <VoiceCompanion onCommand={handleVoiceCommand} backendOnline={backendOnline} />}
         {activeTab === "tools" && <ExternalToolsPanel />}
+        {activeTab === "photo" && <PhotoPanel backendOnline={backendOnline} />}
 
         {/* Footer */}
         <div style={{ marginTop:12,padding:"12px 16px",background:C.bg1,border:`0.5px solid ${C.border}`,borderRadius:6,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8 }}>

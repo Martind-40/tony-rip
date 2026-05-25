@@ -703,6 +703,91 @@ Respond in the same language as the meeting notes. Be concise and actionable. Us
     return;
   }
 
+
+  // POST /api/photo/analyze
+  if (method === "POST" && url === "/api/photo/analyze") {
+    if (!requireToken(req, res, origin)) return;
+    const body = await parseBody(req);
+    const { filename, description, category, save, base64 } = body;
+
+    if (!filename || !filename.trim()) {
+      send(res, 400, { ok: false, reason: "filename required." }, origin);
+      return;
+    }
+
+    // Block dangerous filenames
+    const dangerous = ["../", ".env", "secret", "key", "token", "password"];
+    for (const d of dangerous) {
+      if (filename.toLowerCase().includes(d)) {
+        send(res, 403, { ok: false, blocked: true, reason: "Access denied." }, origin);
+        return;
+      }
+    }
+
+    const date = new Date().toISOString().split("T")[0];
+    const VALID_CATEGORIES = ["meeting", "idea", "field", "document", "benchmark", "evidence", "other"];
+    const safeCategory = VALID_CATEGORIES.includes(category) ? category : "other";
+
+    let result = null;
+    let provider = "local";
+
+    // If AI has vision capability and base64 provided, analyze image
+    if (base64 && (OPENAI_KEY || ANTHROPIC_KEY)) {
+      try {
+        if (OPENAI_KEY) {
+          const res2 = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_KEY}` },
+            body: JSON.stringify({
+              model: "gpt-4o-mini",
+              max_tokens: 500,
+              messages: [{
+                role: "user",
+                content: [
+                  { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64}` } },
+                  { type: "text", text: `You are ULTRON analyzing a field capture. Category: ${safeCategory}.\n\nExtract:\n1. DESCRIPTION (what you see)\n2. KEY IDEAS (actionable insights)\n3. TASKS DETECTED (if any)\n4. CLASSIFICATION (type of content)\n5. NEXT STEPS (suggested actions)\n\nBe concise and actionable.` }
+                ]
+              }]
+            })
+          });
+          const data = await res2.json();
+          if (res2.ok) {
+            result = data.choices[0].message.content;
+            provider = "openai_vision";
+            const tokens = data.usage?.total_tokens || 0;
+            logConsumption({ provider: "openai", model: "gpt-4o-mini", tokens_used: tokens, cost_estimated: Math.round((tokens / 1000000) * 150 * 10000) / 10000, call_type: "vision" });
+          }
+        }
+      } catch { /* fall through to local */ }
+    }
+
+    // Local fallback — use description if provided
+    if (!result) {
+      const desc = description || filename;
+      result = `## DESCRIPTION\n${desc}\n\n## KEY IDEAS\n- Visual capture requiring manual review\n- Category: ${safeCategory}\n\n## TASKS DETECTED\n- Review and classify this capture\n- Extract relevant information manually\n\n## CLASSIFICATION\n- Type: ${safeCategory}\n- File: ${filename}\n- Date: ${date}\n\n## NEXT STEPS\n- Open file and review content\n- Distill key insights to knowledge layer`;
+      provider = description ? "local_with_description" : "local_metadata_only";
+    }
+
+    // Save analysis to workspace/photos/
+    let savedFile = null;
+    if (save) {
+      try {
+        const photosPath = path.join(PROJECT_ROOT, "workspace", "photos");
+        if (!fs.existsSync(photosPath)) fs.mkdirSync(photosPath, { recursive: true });
+        const slug = filename.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 30);
+        const analysisFilename = `${date}-${slug}-analysis.md`;
+        const filePath = path.join(photosPath, analysisFilename);
+        const fileContent = `# Photo Analysis — ${filename}\nDate: ${date} | Category: ${safeCategory}\n\n${result}\n\n---\n*Processed by ULTRON v2.7 — ${provider}*\n`;
+        fs.writeFileSync(filePath, fileContent);
+        savedFile = analysisFilename;
+      } catch { savedFile = null; }
+    }
+
+    addLog("photo_analyze", { filename, category: safeCategory, provider, saved: !!savedFile });
+    send(res, 200, { ok: true, provider, filename, category: safeCategory, date, result, savedFile }, origin);
+    return;
+  }
+
   send(res, 404, { ok: false, reason: "Endpoint not found." }, origin);
 }
 
