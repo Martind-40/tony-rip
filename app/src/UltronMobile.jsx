@@ -1,17 +1,18 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import WorkspacePanel from "./WorkspacePanel";
+import MeetingPanel from "./MeetingPanel";
+import KnowledgePanel from "./KnowledgePanel";
+import AgentsPanel from "./AgentsPanel";
+import EcosystemPanel from "./EcosystemPanel";
+import VoiceCompanion from "./VoiceCompanion";
 
 const BACKEND_URL = "http://localhost:3001";
 const TOKEN = "ULTRON_LOCAL_OPERATOR_TOKEN";
 
 const COMMAND_ALLOWLIST = [
-  "pwd",
-  "git status",
-  "git log --oneline -5",
-  "git diff --stat",
-  "npm run build",
-  "find . -maxdepth 2 -type f"
+  "pwd", "git status", "git log --oneline -5",
+  "git diff --stat", "npm run build", "find . -maxdepth 2 -type f"
 ];
-
 const MEMORY_FILES = [
   "operator_command_log.md",
   "v1_1_real_operator_testing_snapshot.json",
@@ -21,607 +22,365 @@ const MEMORY_FILES = [
 function authFetch(path, options = {}) {
   return fetch(`${BACKEND_URL}${path}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      "x-ultron-token": TOKEN,
-      ...(options.headers || {})
-    }
+    headers: { "Content-Type": "application/json", "x-ultron-token": TOKEN, ...(options.headers || {}) }
   });
 }
 
-function StatusDot({ on }) {
-  return (
-    <span style={{
-      display: "inline-block",
-      width: 8, height: 8,
-      borderRadius: "50%",
-      background: on ? "#c0392b" : "#444",
-      marginRight: 6,
-      flexShrink: 0
-    }} />
-  );
+const C = {
+  bg: "#080808", bg1: "#0d0d0d", bg2: "#111", bg3: "#0a0a0a",
+  red: "#c0392b", redDim: "#8b1a13", redGlow: "rgba(192,57,43,0.15)",
+  border: "#1e1e1e", border2: "#2a2a2a",
+  text: "#e8e8e8", textDim: "#888", textFaint: "#444",
+  green: "#27ae60", greenBg: "#0a1f0a",
+  amber: "#e67e22", amberBg: "#1f1500",
+  fontMono: "'Share Tech Mono', 'Courier New', monospace",
+  fontUI: "'Rajdhani', 'Share Tech Mono', monospace"
+};
+
+const css = `
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: ${C.bg}; color: ${C.text}; font-family: ${C.fontUI}; -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 3px; height: 3px; }
+  ::-webkit-scrollbar-track { background: ${C.bg1}; }
+  ::-webkit-scrollbar-thumb { background: ${C.redDim}; border-radius: 2px; }
+  input, textarea, button, select { font-family: inherit; }
+  input::placeholder, textarea::placeholder { color: ${C.textFaint}; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  @keyframes slideIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes scanline { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
+  .msg-in { animation: slideIn 0.2s ease; }
+  .scanline { position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(transparent,rgba(192,57,43,0.25),transparent);animation:scanline 5s linear infinite;pointer-events:none;z-index:9999;opacity:0.25; }
+`;
+
+function Dot({ on, pulse }) {
+  return <span style={{ display:"inline-block",width:7,height:7,borderRadius:"50%",flexShrink:0,background:on?C.red:"#333",boxShadow:on?`0 0 6px ${C.red}`:"none",animation:pulse&&on?"pulse 1.5s infinite":"none" }} />;
 }
 
-function Badge({ children, color = "red" }) {
-  const colors = {
-    red: { bg: "#2a0a0a", text: "#e74c3c", border: "#5a1010" },
-    green: { bg: "#0a1f0a", text: "#27ae60", border: "#1a4a1a" },
-    gray: { bg: "#1a1a1a", text: "#888", border: "#333" },
-    amber: { bg: "#1f1500", text: "#e67e22", border: "#4a3000" }
-  };
-  const c = colors[color] || colors.gray;
-  return (
-    <span style={{
-      background: c.bg, color: c.text,
-      border: `0.5px solid ${c.border}`,
-      borderRadius: 3, padding: "2px 7px",
-      fontSize: 10, fontFamily: "'Share Tech Mono', monospace",
-      letterSpacing: "0.08em", fontWeight: 500
-    }}>{children}</span>
-  );
+function Badge({ children, color="red", small }) {
+  const p = { red:{bg:"#1a0505",text:C.red,border:"#4a0a0a"}, green:{bg:C.greenBg,text:C.green,border:"#1a4a1a"}, amber:{bg:C.amberBg,text:C.amber,border:"#4a3000"}, gray:{bg:"#141414",text:C.textDim,border:"#2a2a2a"} }[color]||{bg:"#141414",text:C.textDim,border:"#2a2a2a"};
+  return <span style={{ background:p.bg,color:p.text,border:`0.5px solid ${p.border}`,borderRadius:3,padding:small?"1px 5px":"2px 7px",fontSize:small?9:10,fontFamily:C.fontMono,letterSpacing:"0.08em",fontWeight:500,whiteSpace:"nowrap" }}>{children}</span>;
 }
 
-function Panel({ title, eyebrow, children, style = {} }) {
-  return (
-    <div style={{
-      background: "#0d0d0d",
-      border: "0.5px solid #2a2a2a",
-      borderRadius: 6,
-      padding: "16px",
-      marginBottom: 12,
-      ...style
-    }}>
-      {eyebrow && (
-        <div style={{ fontSize: 9, color: "#555", letterSpacing: "0.12em", marginBottom: 4, fontFamily: "'Share Tech Mono', monospace" }}>
-          {eyebrow}
-        </div>
-      )}
-      {title && (
-        <div style={{ fontSize: 13, color: "#c0392b", fontWeight: 500, marginBottom: 12, fontFamily: "'Share Tech Mono', monospace", letterSpacing: "0.04em" }}>
-          {title}
-        </div>
-      )}
-      {children}
-    </div>
-  );
+function Card({ title, eyebrow, children, style={}, action }) {
+  return <div style={{ background:C.bg1,border:`0.5px solid ${C.border}`,borderRadius:6,padding:"14px 16px",marginBottom:10,...style }}>
+    {(eyebrow||action)&&<div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:title?4:10 }}>
+      {eyebrow&&<span style={{ fontSize:9,color:"#444",letterSpacing:"0.14em",fontFamily:C.fontMono }}>{eyebrow}</span>}
+      {action}
+    </div>}
+    {title&&<div style={{ fontSize:12,color:C.red,fontWeight:600,marginBottom:12,fontFamily:C.fontMono,letterSpacing:"0.06em" }}>{title}</div>}
+    {children}
+  </div>;
 }
 
-function ChatPanel({ backendOnline }) {
-  const [messages, setMessages] = useState([
-    { role: "system", text: "ULTRON v1.2 — Mobile Backend Foundation. Claude Proxy blocked until v1.3." }
-  ]);
+function Btn({ children, onClick, variant="ghost", disabled, style={}, size="md" }) {
+  const v = { primary:{background:C.red,border:`0.5px solid ${C.red}`,color:"#fff"}, ghost:{background:"transparent",border:`0.5px solid ${C.border2}`,color:C.textDim}, danger:{background:"#1a0505",border:`0.5px solid #5a1010`,color:C.red}, active:{background:C.redGlow,border:`0.5px solid ${C.red}`,color:C.red} }[variant];
+  const s = { sm:{padding:"5px 10px",fontSize:10,minHeight:32}, md:{padding:"9px 16px",fontSize:11,minHeight:44} }[size];
+  return <button onClick={onClick} disabled={disabled} style={{ ...v,...s,borderRadius:4,cursor:disabled?"not-allowed":"pointer",fontFamily:C.fontMono,opacity:disabled?0.4:1,...style }}>{children}</button>;
+}
+
+function Row({ label, value, valueColor }) {
+  return <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:`0.5px solid ${C.border}` }}>
+    <span style={{ fontSize:11,color:C.textDim,fontFamily:C.fontMono }}>{label}</span>
+    <span style={{ fontSize:11,color:valueColor||C.text,fontFamily:C.fontMono }}>{value}</span>
+  </div>;
+}
+
+// ── External Tools Panel ───────────────────────────────────
+function ExternalToolsPanel() {
+  const tools = [
+    { name: "LiteLLM", use: "Multi-provider AI router", sprint: "v1.8", status: "PLANNED", url: "github.com/BerriAI/litellm" },
+    { name: "mem0", use: "Persistent agent memory", sprint: "v2.2+", status: "PLANNED", url: "github.com/mem0ai/mem0" },
+    { name: "whisper.cpp", use: "Local audio transcription", sprint: "v2.0", status: "PLANNED", url: "github.com/ggml-org/whisper.cpp" },
+    { name: "kokoro-js", use: "Free browser TTS", sprint: "v1.6", status: "READY", url: "github.com/hexgrad/kokoro" },
+    { name: "Hermes (Nous)", use: "Local agent model", sprint: "v2.3+", status: "PLANNED", url: "huggingface.co/NousResearch" },
+    { name: "Coworker AI", use: "Task management AI", sprint: "v2.7", status: "EVALUATING", url: "coworkerai.io" },
+    { name: "Ollama", use: "Local LLM runner", sprint: "v1.8", status: "READY", url: "ollama.com" },
+    { name: "Piper TTS", use: "Offline robotic TTS", sprint: "v1.6+", status: "PLANNED", url: "github.com/rhasspy/piper" }
+  ];
+  const statusColor = { READY: C.green, PLANNED: C.textDim, EVALUATING: C.amber, BLOCKED: C.red };
+
+  return <Card eyebrow="MODULE 14 / EXTERNAL TOOLS" title="TOOL REGISTRY">
+    {tools.map(t => <div key={t.name} style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",padding:"7px 0",borderBottom:`0.5px solid ${C.border}` }}>
+      <div>
+        <div style={{ fontSize:11,color:C.text,fontFamily:C.fontMono }}>{t.name}</div>
+        <div style={{ fontSize:9,color:"#444",fontFamily:C.fontMono }}>{t.use} · {t.sprint}</div>
+      </div>
+      <span style={{ fontSize:9,color:statusColor[t.status]||C.textDim,fontFamily:C.fontMono,background:C.bg2,padding:"2px 6px",borderRadius:2,flexShrink:0,marginLeft:8 }}>{t.status}</span>
+    </div>)}
+    <div style={{ marginTop:10,fontSize:9,color:"#333",fontFamily:C.fontMono }}>No tools integrated yet. Architecture prepared for v2.7+</div>
+  </Card>;
+}
+
+// ── Navigation tabs ────────────────────────────────────────
+const TABS = [
+  { id: "command", label: "CMD", icon: "⚡" },
+  { id: "workspace", label: "WORK", icon: "📁" },
+  { id: "meetings", label: "MTG", icon: "🎙" },
+  { id: "knowledge", label: "KNW", icon: "⚗" },
+  { id: "agents", label: "AGT", icon: "🤖" },
+  { id: "ecosystem", label: "ECO", icon: "🔀" },
+  { id: "voice", label: "VOICE", icon: "🥽" },
+  { id: "tools", label: "TOOLS", icon: "🔧" }
+];
+
+// ── Chat Panel ─────────────────────────────────────────────
+function ChatPanel({ backendOnline, activeModel, setActiveModel }) {
+  const [messages, setMessages] = useState([{ role:"system", text:"ULTRON v2.7 — Full operator stack active. Bloque 3 complete.", ts:new Date().toLocaleTimeString() }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages]);
 
   async function send() {
     const text = input.trim();
-    if (!text) return;
-    setMessages(m => [...m, { role: "user", text }]);
-    setInput("");
-    setLoading(true);
+    if (!text || loading) return;
+    if (text === "/clear") { setMessages([{ role:"system", text:"Cleared.", ts:new Date().toLocaleTimeString() }]); setInput(""); return; }
+    if (text.startsWith("/model ")) { const m = text.replace("/model ","").trim(); setActiveModel(m); setMessages(p=>[...p,{ role:"system", text:`Model: ${m.toUpperCase()}`, ts:new Date().toLocaleTimeString() }]); setInput(""); return; }
+    setMessages(m=>[...m,{ role:"user", text, ts:new Date().toLocaleTimeString() }]);
+    setInput(""); setLoading(true);
     try {
       if (backendOnline) {
-        const res = await authFetch("/api/chat", {
-          method: "POST",
-          body: JSON.stringify({ message: text })
-        });
+        const res = await authFetch("/api/chat",{ method:"POST", body:JSON.stringify({ message:text, model:activeModel!=="auto"?activeModel:undefined }) });
         const data = await res.json();
-        setMessages(m => [...m, { role: "ultron", text: data.message || "No response." }]);
-      } else {
-        setMessages(m => [...m, { role: "ultron", text: "Backend offline. Start backend with: npm run backend" }]);
-      }
-    } catch {
-      setMessages(m => [...m, { role: "ultron", text: "Backend offline. Start backend with: npm run backend" }]);
-    }
+        setMessages(m=>[...m,{ role:"ultron", text:data.message||"No response.", provider:data.provider, ts:new Date().toLocaleTimeString() }]);
+      } else setMessages(m=>[...m,{ role:"ultron", text:"Backend offline.", ts:new Date().toLocaleTimeString() }]);
+    } catch { setMessages(m=>[...m,{ role:"ultron", text:"Connection failed.", ts:new Date().toLocaleTimeString() }]); }
     setLoading(false);
   }
 
-  return (
-    <Panel eyebrow="MODULE 01 / CHAT" title="OPERATOR CHAT">
-      <div style={{
-        height: 200, overflowY: "auto", marginBottom: 12,
-        background: "#080808", borderRadius: 4, padding: "10px 12px",
-        border: "0.5px solid #1a1a1a"
-      }}>
-        {messages.map((m, i) => (
-          <div key={i} style={{ marginBottom: 8 }}>
-            <span style={{
-              fontSize: 9, color: m.role === "user" ? "#c0392b" : m.role === "system" ? "#555" : "#666",
-              fontFamily: "'Share Tech Mono', monospace", marginRight: 6
-            }}>
-              {m.role === "user" ? "CHIEF>" : m.role === "system" ? "SYS>" : "ULTRON>"}
-            </span>
-            <span style={{ fontSize: 12, color: m.role === "user" ? "#eee" : "#999", lineHeight: 1.5 }}>
-              {m.text}
-            </span>
-          </div>
-        ))}
-        {loading && (
-          <div style={{ fontSize: 12, color: "#c0392b", fontFamily: "'Share Tech Mono', monospace" }}>
-            ULTRON&gt; <span style={{ animation: "blink 1s infinite" }}>▋</span>
-          </div>
-        )}
-        <div ref={bottomRef} />
-      </div>
-      <div style={{ display: "flex", gap: 8 }}>
-        <input
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
-          placeholder="Enter command or message..."
-          style={{
-            flex: 1, background: "#111", border: "0.5px solid #333",
-            borderRadius: 4, padding: "10px 12px", color: "#eee",
-            fontFamily: "'Share Tech Mono', monospace", fontSize: 12,
-            outline: "none", minHeight: 44
-          }}
-        />
-        <button
-          onClick={send}
-          style={{
-            background: "#c0392b", border: "none", borderRadius: 4,
-            color: "#fff", fontFamily: "'Share Tech Mono', monospace",
-            fontSize: 12, padding: "10px 16px", cursor: "pointer",
-            minWidth: 60, minHeight: 44
-          }}
-        >
-          SEND
-        </button>
-      </div>
-    </Panel>
-  );
+  return <Card eyebrow="MODULE 01 / CHAT" title="OPERATOR CHAT">
+    <div style={{ display:"flex",gap:4,marginBottom:10,flexWrap:"wrap" }}>
+      {["auto","openai","gemini","claude","ollama"].map(m=><button key={m} onClick={()=>setActiveModel(m)} style={{ background:activeModel===m?C.redGlow:"transparent",border:`0.5px solid ${activeModel===m?C.red:C.border2}`,borderRadius:3,padding:"3px 8px",cursor:"pointer",color:activeModel===m?C.red:"#555",fontSize:9,fontFamily:C.fontMono }}>{m.toUpperCase()}</button>)}
+    </div>
+    <div style={{ height:200,overflowY:"auto",background:"#050505",borderRadius:4,padding:"10px 12px",marginBottom:10,border:`0.5px solid ${C.border}` }}>
+      {messages.map((m,i)=><div key={i} className="msg-in" style={{ marginBottom:10 }}>
+        <div style={{ display:"flex",justifyContent:"space-between",marginBottom:2 }}>
+          <span style={{ fontSize:9,color:m.role==="user"?C.red:m.role==="system"?"#444":"#555",fontFamily:C.fontMono }}>{m.role==="user"?"CHIEF":m.role==="system"?"SYS":`ULTRON${m.provider?` [${m.provider}]`:""}`}</span>
+          <span style={{ fontSize:8,color:"#333",fontFamily:C.fontMono }}>{m.ts}</span>
+        </div>
+        <div style={{ fontSize:12,color:m.role==="user"?C.text:m.role==="system"?"#555":"#aaa",lineHeight:1.6 }}>{m.text}</div>
+      </div>)}
+      {loading&&<div style={{ fontSize:12,color:C.red,fontFamily:C.fontMono }}>ULTRON&gt; <span style={{ animation:"blink 0.8s infinite" }}>▋</span></div>}
+      <div ref={bottomRef} />
+    </div>
+    <div style={{ display:"flex",gap:8 }}>
+      <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&send()} placeholder="/model openai · /clear · Ask ULTRON..." style={{ flex:1,background:C.bg2,border:`0.5px solid ${C.border2}`,borderRadius:4,padding:"10px 12px",color:C.text,fontFamily:C.fontMono,fontSize:11,outline:"none",minHeight:44 }} />
+      <Btn onClick={send} variant="primary" style={{ minWidth:56 }}>▶</Btn>
+    </div>
+  </Card>;
 }
 
 function VoicePanel() {
   const [status, setStatus] = useState("idle");
   const [transcript, setTranscript] = useState("");
   const [supported, setSupported] = useState(true);
-  const recognitionRef = useRef(null);
-
+  const recRef = useRef(null);
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setSupported(false);
-      return;
-    }
-    const rec = new SpeechRecognition();
-    rec.continuous = false;
-    rec.interimResults = true;
-    rec.lang = "es-MX";
-    rec.onresult = (e) => {
-      const t = Array.from(e.results).map(r => r[0].transcript).join("");
-      setTranscript(t);
-    };
-    rec.onend = () => setStatus("idle");
-    rec.onerror = () => setStatus("error");
-    recognitionRef.current = rec;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { setSupported(false); return; }
+    const rec = new SR(); rec.continuous=false; rec.interimResults=true; rec.lang="es-MX";
+    rec.onresult=e=>setTranscript(Array.from(e.results).map(r=>r[0].transcript).join(""));
+    rec.onend=()=>setStatus("idle"); rec.onerror=()=>setStatus("error");
+    recRef.current=rec;
   }, []);
-
-  function startVoice() {
-    if (!supported || !recognitionRef.current) return;
-    setTranscript("");
-    setStatus("listening");
-    recognitionRef.current.start();
-  }
-
-  function stopVoice() {
-    if (!recognitionRef.current) return;
-    recognitionRef.current.stop();
-    setStatus("idle");
-  }
-
-  return (
-    <Panel eyebrow="MODULE 02 / VOICE" title="VOICE INPUT">
-      {!supported ? (
-        <div style={{ fontSize: 12, color: "#666", fontFamily: "'Share Tech Mono', monospace" }}>
-          Web Speech API not supported in this browser.
-        </div>
-      ) : (
-        <>
-          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-            <button
-              onClick={startVoice}
-              disabled={status === "listening"}
-              style={{
-                flex: 1, minHeight: 44, background: status === "listening" ? "#1a0a0a" : "#c0392b",
-                border: `0.5px solid ${status === "listening" ? "#5a1010" : "#c0392b"}`,
-                borderRadius: 4, color: "#fff",
-                fontFamily: "'Share Tech Mono', monospace", fontSize: 12,
-                cursor: status === "listening" ? "not-allowed" : "pointer"
-              }}
-            >
-              {status === "listening" ? "● LISTENING..." : "▶ START VOICE"}
-            </button>
-            <button
-              onClick={stopVoice}
-              style={{
-                minHeight: 44, background: "#111", border: "0.5px solid #333",
-                borderRadius: 4, color: "#888",
-                fontFamily: "'Share Tech Mono', monospace", fontSize: 12,
-                padding: "0 16px", cursor: "pointer"
-              }}
-            >
-              ■ STOP
-            </button>
-          </div>
-          <div style={{
-            background: "#080808", borderRadius: 4, padding: "10px 12px",
-            minHeight: 40, fontSize: 12, color: transcript ? "#eee" : "#444",
-            fontFamily: "'Share Tech Mono', monospace", border: "0.5px solid #1a1a1a"
-          }}>
-            {transcript || "Transcript appears here..."}
-          </div>
-          <div style={{ marginTop: 6, fontSize: 10, color: "#555", fontFamily: "'Share Tech Mono', monospace" }}>
-            ENGINE: Web Speech API (es-MX) — ElevenLabs: BLOCKED_UNTIL_V1_3
-          </div>
-        </>
-      )}
-    </Panel>
-  );
+  return <Card eyebrow="MODULE 02 / VOICE" title="VOICE INPUT">
+    {!supported?<div style={{ fontSize:11,color:"#555",fontFamily:C.fontMono }}>Web Speech API not supported.</div>:<>
+      <div style={{ display:"flex",gap:8,marginBottom:10 }}>
+        <Btn onClick={()=>{ setTranscript(""); setStatus("listening"); recRef.current?.start(); }} disabled={status==="listening"} variant={status==="listening"?"active":"primary"} style={{ flex:1 }}>{status==="listening"?"● LISTENING...":"▶ START VOICE"}</Btn>
+        <Btn onClick={()=>{ recRef.current?.stop(); setStatus("idle"); }} variant="ghost" style={{ minWidth:60 }}>■ STOP</Btn>
+      </div>
+      <div style={{ background:"#050505",borderRadius:4,padding:"10px 12px",minHeight:44,fontSize:12,color:transcript?C.text:"#333",fontFamily:C.fontMono,border:`0.5px solid ${C.border}`,lineHeight:1.6 }}>{transcript||"Transcript appears here..."}</div>
+      <div style={{ marginTop:6,fontSize:9,color:"#333",fontFamily:C.fontMono }}>WEB SPEECH API (es-MX) · ELEVENLABS: BLOCKED_UNTIL_KEY</div>
+    </>}
+  </Card>;
 }
 
 function CommandPanel({ backendOnline }) {
   const [selected, setSelected] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  async function dryRun(command) {
-    setSelected(command);
-    setResult(null);
-    setLoading(true);
+  async function dryRun(cmd) {
+    setSelected(cmd); setResult(null); setLoading(true);
     try {
-      if (backendOnline) {
-        const res = await authFetch("/api/execute", {
-          method: "POST",
-          body: JSON.stringify({ command, approved: true })
-        });
-        const data = await res.json();
-        setResult(data);
-      } else {
-        setResult({ ok: true, execution: "DRY_RUN", message: "Backend offline — local simulation only." });
-      }
-    } catch {
-      setResult({ ok: false, reason: "Backend offline." });
-    }
+      if (backendOnline) { const res=await authFetch("/api/execute",{method:"POST",body:JSON.stringify({command:cmd,approved:true})}); setResult(await res.json()); }
+      else setResult({ ok:true,execution:"DRY_RUN",message:"Backend offline." });
+    } catch { setResult({ ok:false,reason:"Failed." }); }
     setLoading(false);
   }
-
-  return (
-    <Panel eyebrow="MODULE 03 / COMMANDS" title="COMMAND CONSOLE">
-      <div style={{ marginBottom: 10 }}>
-        {COMMAND_ALLOWLIST.map((cmd) => (
-          <button
-            key={cmd}
-            onClick={() => dryRun(cmd)}
-            style={{
-              display: "block", width: "100%", textAlign: "left",
-              background: selected === cmd ? "#1a0a0a" : "#111",
-              border: `0.5px solid ${selected === cmd ? "#c0392b" : "#2a2a2a"}`,
-              borderRadius: 4, padding: "10px 12px", marginBottom: 6,
-              color: selected === cmd ? "#e74c3c" : "#888",
-              fontFamily: "'Share Tech Mono', monospace", fontSize: 11,
-              cursor: "pointer", minHeight: 44
-            }}
-          >
-            $ {cmd}
-          </button>
-        ))}
-      </div>
-      {loading && (
-        <div style={{ fontSize: 11, color: "#c0392b", fontFamily: "'Share Tech Mono', monospace" }}>
-          Validating...
-        </div>
-      )}
-      {result && (
-        <div style={{
-          background: "#080808", borderRadius: 4, padding: "10px 12px",
-          border: `0.5px solid ${result.ok ? "#1a4a1a" : "#5a1010"}`
-        }}>
-          <div style={{ fontSize: 10, color: result.ok ? "#27ae60" : "#e74c3c", fontFamily: "'Share Tech Mono', monospace", marginBottom: 4 }}>
-            {result.ok ? "✓ VALIDATED" : "✗ BLOCKED"}
-          </div>
-          <div style={{ fontSize: 11, color: "#888", fontFamily: "'Share Tech Mono', monospace" }}>
-            {result.message || result.reason || ""}
-          </div>
-        </div>
-      )}
-    </Panel>
-  );
+  return <Card eyebrow="MODULE 03 / COMMANDS" title="COMMAND CONSOLE">
+    {COMMAND_ALLOWLIST.map(cmd=><button key={cmd} onClick={()=>dryRun(cmd)} style={{ display:"block",width:"100%",textAlign:"left",background:selected===cmd?C.redGlow:C.bg2,border:`0.5px solid ${selected===cmd?C.red:C.border}`,borderRadius:4,padding:"9px 12px",marginBottom:5,color:selected===cmd?C.red:"#666",fontFamily:C.fontMono,fontSize:11,cursor:"pointer",minHeight:40 }}>$ {cmd}</button>)}
+    {loading&&<div style={{ fontSize:10,color:C.red,fontFamily:C.fontMono }}>Validating...</div>}
+    {result&&<div style={{ background:"#050505",borderRadius:4,padding:"8px 10px",border:`0.5px solid ${result.ok?"#1a4a1a":"#5a1010"}` }}>
+      <div style={{ fontSize:9,color:result.ok?C.green:C.red,fontFamily:C.fontMono,marginBottom:3 }}>{result.ok?"✓ DRY_RUN":"✗ BLOCKED"}</div>
+      <div style={{ fontSize:11,color:"#777",fontFamily:C.fontMono }}>{result.message||result.reason}</div>
+    </div>}
+  </Card>;
 }
 
 function TaskQueue() {
-  const STATUS_COLORS = {
-    DRAFT: "gray", PENDING_APPROVAL: "amber",
-    APPROVED: "green", DRY_RUN_EXECUTED: "green", BLOCKED: "red"
-  };
-  const [tasks, setTasks] = useState([
-    { id: "T001", title: "Review git status", status: "DRAFT" },
-    { id: "T002", title: "Run build check", status: "PENDING_APPROVAL" },
-    { id: "T003", title: "Scan project files", status: "APPROVED" }
-  ]);
-  const [input, setInput] = useState("");
-
-  function addTask() {
-    const t = input.trim();
-    if (!t) return;
-    setTasks(prev => [...prev, {
-      id: `T${String(Date.now()).slice(-4)}`,
-      title: t, status: "DRAFT"
-    }]);
-    setInput("");
-  }
-
-  function nextStatus(status) {
-    const flow = { DRAFT: "PENDING_APPROVAL", PENDING_APPROVAL: "APPROVED", APPROVED: "DRY_RUN_EXECUTED", DRY_RUN_EXECUTED: "DRAFT", BLOCKED: "DRAFT" };
-    return flow[status] || "DRAFT";
-  }
-
-  return (
-    <Panel eyebrow="MODULE 04 / TASKS" title="TASK QUEUE">
-      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-        <input
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && addTask()}
-          placeholder="New task..."
-          style={{
-            flex: 1, background: "#111", border: "0.5px solid #333",
-            borderRadius: 4, padding: "10px 12px", color: "#eee",
-            fontFamily: "'Share Tech Mono', monospace", fontSize: 11,
-            outline: "none", minHeight: 44
-          }}
-        />
-        <button onClick={addTask} style={{
-          background: "#1a0a0a", border: "0.5px solid #c0392b",
-          borderRadius: 4, color: "#c0392b", cursor: "pointer",
-          fontFamily: "'Share Tech Mono', monospace", fontSize: 12,
-          padding: "0 14px", minHeight: 44
-        }}>+</button>
-      </div>
-      {tasks.map(task => (
-        <div key={task.id} style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          background: "#111", borderRadius: 4, padding: "10px 12px",
-          marginBottom: 6, border: "0.5px solid #1a1a1a", gap: 8
-        }}>
-          <div>
-            <div style={{ fontSize: 10, color: "#555", fontFamily: "'Share Tech Mono', monospace" }}>{task.id}</div>
-            <div style={{ fontSize: 12, color: "#ccc" }}>{task.title}</div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-            <Badge color={STATUS_COLORS[task.status] || "gray"}>{task.status}</Badge>
-            <button
-              onClick={() => setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: nextStatus(t.status) } : t))}
-              style={{
-                background: "transparent", border: "0.5px solid #333",
-                borderRadius: 3, color: "#666", cursor: "pointer",
-                fontFamily: "'Share Tech Mono', monospace", fontSize: 10,
-                padding: "4px 8px", minHeight: 32
-              }}
-            >▶</button>
-            <button
-              onClick={() => setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: "BLOCKED" } : t))}
-              style={{
-                background: "transparent", border: "0.5px solid #5a1010",
-                borderRadius: 3, color: "#c0392b", cursor: "pointer",
-                fontFamily: "'Share Tech Mono', monospace", fontSize: 10,
-                padding: "4px 8px", minHeight: 32
-              }}
-            >✗</button>
-          </div>
+  const SF={DRAFT:"PENDING_APPROVAL",PENDING_APPROVAL:"APPROVED",APPROVED:"DRY_RUN_EXECUTED",DRY_RUN_EXECUTED:"DRAFT",BLOCKED:"DRAFT"};
+  const SC={DRAFT:"gray",PENDING_APPROVAL:"amber",APPROVED:"green",DRY_RUN_EXECUTED:"green",BLOCKED:"red"};
+  const [tasks,setTasks]=useState([{id:"T001",title:"Review git status",status:"DRAFT"},{id:"T002",title:"Process meeting notes",status:"PENDING_APPROVAL"},{id:"T003",title:"Run knowledge distiller",status:"APPROVED"}]);
+  const [input,setInput]=useState("");
+  return <Card eyebrow="MODULE 04 / TASKS" title="TASK QUEUE" action={<Badge color="gray">{tasks.length}</Badge>}>
+    <div style={{ display:"flex",gap:6,marginBottom:10 }}>
+      <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&input.trim()&&(setTasks(p=>[{id:`T${String(Date.now()).slice(-4)}`,title:input.trim(),status:"DRAFT"},...p]),setInput(""))} placeholder="New task..." style={{ flex:1,background:C.bg2,border:`0.5px solid ${C.border2}`,borderRadius:4,padding:"9px 12px",color:C.text,fontFamily:C.fontMono,fontSize:11,outline:"none",minHeight:44 }} />
+      <Btn onClick={()=>input.trim()&&(setTasks(p=>[{id:`T${String(Date.now()).slice(-4)}`,title:input.trim(),status:"DRAFT"},...p]),setInput(""))} variant="danger" style={{ minWidth:44 }}>+</Btn>
+    </div>
+    <div style={{ maxHeight:200,overflowY:"auto" }}>
+      {tasks.map(t=><div key={t.id} style={{ display:"flex",alignItems:"center",justifyContent:"space-between",background:C.bg2,borderRadius:4,padding:"8px 10px",marginBottom:5,border:`0.5px solid ${C.border}`,gap:8 }}>
+        <div style={{ minWidth:0 }}>
+          <div style={{ fontSize:9,color:"#444",fontFamily:C.fontMono }}>{t.id}</div>
+          <div style={{ fontSize:12,color:C.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{t.title}</div>
         </div>
-      ))}
-    </Panel>
-  );
+        <div style={{ display:"flex",alignItems:"center",gap:5,flexShrink:0 }}>
+          <Badge color={SC[t.status]||"gray"} small>{t.status}</Badge>
+          <button onClick={()=>setTasks(p=>p.map(x=>x.id===t.id?{...x,status:SF[x.status]}:x))} style={{ background:"transparent",border:`0.5px solid ${C.border2}`,borderRadius:3,color:"#555",cursor:"pointer",fontSize:10,padding:"3px 6px",minHeight:28,fontFamily:C.fontMono }}>▶</button>
+          <button onClick={()=>setTasks(p=>p.map(x=>x.id===t.id?{...x,status:"BLOCKED"}:x))} style={{ background:"transparent",border:`0.5px solid #5a1010`,borderRadius:3,color:C.red,cursor:"pointer",fontSize:10,padding:"3px 6px",minHeight:28,fontFamily:C.fontMono }}>✗</button>
+        </div>
+      </div>)}
+    </div>
+  </Card>;
 }
 
-function SecurityPanel() {
-  const items = [
-    { label: "External network", value: "OFF", ok: true },
-    { label: "Secrets access", value: "OFF", ok: true },
-    { label: ".env access", value: "OFF", ok: true },
-    { label: "Git push", value: "OFF", ok: true },
-    { label: "Real shell execution", value: "OFF", ok: true },
-    { label: "Human approval", value: "ON", ok: true },
-    { label: "Claude API", value: "BLOCKED_UNTIL_V1_3", ok: false },
-    { label: "ElevenLabs", value: "BLOCKED_UNTIL_V1_3", ok: false }
-  ];
-  return (
-    <Panel eyebrow="MODULE 05 / SECURITY" title="GUARDRAILS">
-      {items.map(item => (
-        <div key={item.label} style={{
-          display: "flex", justifyContent: "space-between", alignItems: "center",
-          padding: "7px 0", borderBottom: "0.5px solid #1a1a1a"
-        }}>
-          <span style={{ fontSize: 12, color: "#777", fontFamily: "'Share Tech Mono', monospace" }}>
-            {item.label}
-          </span>
-          <Badge color={item.value === "ON" ? "green" : item.value === "OFF" ? "green" : "gray"}>
-            {item.value}
-          </Badge>
-        </div>
-      ))}
-    </Panel>
-  );
+function SecurityPanel({ backendInfo }) {
+  return <Card eyebrow="MODULE 06 / GUARDRAILS" title="SECURITY">
+    {[["External network","OFF","green"],["Secrets","OFF","green"],[".env access","OFF","green"],["Git push","OFF","green"],["Shell real","OFF","green"],["Human approval","ON","green"],["Raw→ecosystem","BLOCKED","gray"],["Agents autonomous","BLOCKED","gray"],["Claude",backendInfo?.claudeProxy||"WAITING",backendInfo?.claudeProxy==="READY_WITH_KEY"?"green":"gray"],["OpenAI",backendInfo?.openaiProxy||"WAITING",backendInfo?.openaiProxy==="READY_WITH_KEY"?"green":"gray"],["Gemini",backendInfo?.geminiProxy||"WAITING",backendInfo?.geminiProxy==="READY_WITH_KEY"?"green":"gray"]].map(([l,v,c])=>(
+      <Row key={l} label={l} value={<Badge color={c} small>{v}</Badge>} />
+    ))}
+  </Card>;
 }
 
 function MemoryPanel({ backendOnline }) {
-  const [contents, setContents] = useState({});
-  const [loading, setLoading] = useState(null);
-
+  const [contents,setContents]=useState({});
+  const [loading,setLoading]=useState(null);
   async function readFile(file) {
     setLoading(file);
-    try {
-      if (backendOnline) {
-        const res = await authFetch(`/api/memory/${file}`);
-        const data = await res.json();
-        setContents(prev => ({ ...prev, [file]: data.content || data.reason || "No content." }));
-      } else {
-        setContents(prev => ({ ...prev, [file]: "Backend offline." }));
-      }
-    } catch {
-      setContents(prev => ({ ...prev, [file]: "Backend offline." }));
-    }
+    try { if (backendOnline) { const res=await authFetch(`/api/memory/${file}`); const d=await res.json(); setContents(p=>({...p,[file]:d.content||d.reason})); } else setContents(p=>({...p,[file]:"Backend offline."})); } catch { setContents(p=>({...p,[file]:"Error."})); }
     setLoading(null);
   }
-
-  return (
-    <Panel eyebrow="MODULE 06 / MEMORY" title="MEMORY READ">
-      {MEMORY_FILES.map(file => (
-        <div key={file} style={{ marginBottom: 10 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-            <span style={{ fontSize: 11, color: "#888", fontFamily: "'Share Tech Mono', monospace" }}>{file}</span>
-            <button
-              onClick={() => readFile(file)}
-              style={{
-                background: "#111", border: "0.5px solid #333", borderRadius: 3,
-                color: "#888", cursor: "pointer", fontFamily: "'Share Tech Mono', monospace",
-                fontSize: 10, padding: "4px 10px", minHeight: 32
-              }}
-            >
-              {loading === file ? "..." : "READ"}
-            </button>
-          </div>
-          {contents[file] && (
-            <pre style={{
-              background: "#080808", borderRadius: 4, padding: "8px 10px",
-              fontSize: 10, color: "#666", fontFamily: "'Share Tech Mono', monospace",
-              margin: 0, overflowX: "auto", maxHeight: 120,
-              border: "0.5px solid #1a1a1a", whiteSpace: "pre-wrap", wordBreak: "break-word"
-            }}>
-              {contents[file].slice(0, 500)}{contents[file].length > 500 ? "\n[truncated...]" : ""}
-            </pre>
-          )}
+  return <Card eyebrow="MODULE 05 / MEMORY" title="MEMORY">
+    <Row label="L0 Session" value="active" valueColor={C.green} />
+    <Row label="L1 Operative" value="runtime/logs" valueColor={C.textDim} />
+    <Row label="L2 Distilled" value="knowledge/ ACTIVE" valueColor={C.amber} />
+    <Row label="L3 Ecosystem" value="BLOCKED_UNTIL_KEY" valueColor="#444" />
+    <div style={{ marginTop:10 }}>
+      {MEMORY_FILES.map(file=><div key={file} style={{ marginBottom:6 }}>
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3 }}>
+          <span style={{ fontSize:10,color:"#666",fontFamily:C.fontMono,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginRight:8 }}>{file}</span>
+          <Btn onClick={()=>readFile(file)} size="sm" variant="ghost">{loading===file?"...":"READ"}</Btn>
         </div>
-      ))}
-    </Panel>
-  );
+        {contents[file]&&<pre style={{ background:"#050505",borderRadius:4,padding:"6px 8px",fontSize:9,color:"#666",fontFamily:C.fontMono,overflowX:"auto",maxHeight:80,border:`0.5px solid ${C.border}`,whiteSpace:"pre-wrap",wordBreak:"break-word" }}>{contents[file].slice(0,300)}</pre>}
+      </div>)}
+    </div>
+  </Card>;
 }
 
+function ConsumptionPanel({ backendOnline }) {
+  const [data,setData]=useState(null);
+  const load=useCallback(async()=>{ if (!backendOnline) return; try { const res=await authFetch("/api/consumption"); setData(await res.json()); } catch {} },[backendOnline]);
+  useEffect(()=>{ load(); },[load]);
+  return <Card eyebrow="MODULE 07 / CONSUMPTION" title="AI USAGE" action={<Btn onClick={load} size="sm" variant="ghost">↻</Btn>}>
+    {data?<>
+      <Row label="Calls today" value={`${data.summary.calls_today||0} / ${data.limits.max_calls_per_day}`} />
+      <Row label="Est. cost" value={`$${(data.summary.estimated_cost_usd||0).toFixed(4)}`} valueColor={C.green} />
+      <Row label="Daily limit" value={`$${data.limits.max_daily_cost_usd}`} valueColor={C.textDim} />
+    </>:<div style={{ fontSize:11,color:"#444",fontFamily:C.fontMono }}>{backendOnline?"Loading...":"Backend offline"}</div>}
+  </Card>;
+}
+
+// ── Main App ───────────────────────────────────────────────
 export default function UltronMobile() {
   const [backendOnline, setBackendOnline] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [backendInfo, setBackendInfo] = useState(null);
+  const [activeModel, setActiveModel] = useState("auto");
+  const [activeTab, setActiveTab] = useState("command");
 
   const checkHealth = useCallback(async () => {
     try {
-      const res = await fetch(`${BACKEND_URL}/api/health`, { signal: AbortSignal.timeout(2000) });
-      setBackendOnline(res.ok);
-    } catch {
-      setBackendOnline(false);
-    }
+      const res = await fetch(`${BACKEND_URL}/api/health`, { signal: AbortSignal.timeout(2500) });
+      if (res.ok) { const d = await res.json(); setBackendOnline(true); setBackendInfo(d); }
+      else setBackendOnline(false);
+    } catch { setBackendOnline(false); }
     setChecking(false);
   }, []);
 
-  useEffect(() => {
-    checkHealth();
-    const interval = setInterval(checkHealth, 10000);
-    return () => clearInterval(interval);
-  }, [checkHealth]);
+  useEffect(() => { checkHealth(); const i = setInterval(checkHealth, 12000); return () => clearInterval(i); }, [checkHealth]);
 
-  return (
-    <div style={{
-      minHeight: "100vh",
-      background: "#080808",
-      color: "#eee",
-      fontFamily: "'Rajdhani', 'Share Tech Mono', monospace"
-    }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600&family=Share+Tech+Mono&display=swap');
-        * { box-sizing: border-box; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: #111; }
-        ::-webkit-scrollbar-thumb { background: #c0392b; border-radius: 2px; }
-        input::placeholder { color: #444; }
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-      `}</style>
+  function handleVoiceCommand(action) {
+    if (action === "status") setActiveTab("command");
+    if (action === "meeting") setActiveTab("meetings");
+    if (action === "distill") setActiveTab("knowledge");
+    if (action === "agents") setActiveTab("agents");
+  }
+
+  return <>
+    <style>{css}</style>
+    <div className="scanline" />
+    <div style={{ minHeight:"100vh", background:C.bg }}>
 
       {/* Header */}
-      <header style={{
-        background: "#0d0d0d", borderBottom: "0.5px solid #1a1a1a",
-        padding: "12px 16px", position: "sticky", top: 0, zIndex: 100
-      }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ fontSize: 18, fontWeight: 600, color: "#c0392b", letterSpacing: "0.12em" }}>ULTRON</div>
-            <Badge color="gray">v1.2</Badge>
-            <Badge color="amber">SUPERVISED AUTONOMY</Badge>
+      <header style={{ background:C.bg1,borderBottom:`0.5px solid ${C.border}`,padding:"0 16px",position:"sticky",top:0,zIndex:100,height:52,display:"flex",alignItems:"center",justifyContent:"space-between" }}>
+        <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+          <span style={{ fontSize:20,fontWeight:700,color:C.red,letterSpacing:"0.14em",fontFamily:C.fontUI }}>ULTRON</span>
+          <Badge color="gray">v2.7</Badge>
+          <Badge color="amber">AETHERNOVA</Badge>
+        </div>
+        <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+          <div style={{ display:"flex",alignItems:"center",gap:5 }}>
+            <Dot on={backendOnline} pulse={backendOnline} />
+            <span style={{ fontSize:9,color:checking?"#444":backendOnline?C.red:"#444",fontFamily:C.fontMono }}>{checking?"CHK":backendOnline?"ONLINE":"OFFLINE"}</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <StatusDot on={backendOnline} />
-            <span style={{ fontSize: 10, color: checking ? "#666" : backendOnline ? "#c0392b" : "#555", fontFamily: "'Share Tech Mono', monospace" }}>
-              {checking ? "CHECKING..." : backendOnline ? "BACKEND ONLINE" : "BACKEND OFFLINE"}
-            </span>
-            <button
-              onClick={checkHealth}
-              style={{
-                background: "transparent", border: "0.5px solid #333",
-                borderRadius: 3, color: "#555", cursor: "pointer",
-                fontFamily: "'Share Tech Mono', monospace", fontSize: 10,
-                padding: "3px 8px"
-              }}
-            >↻</button>
-          </div>
+          <button onClick={checkHealth} style={{ background:"transparent",border:`0.5px solid ${C.border}`,borderRadius:3,color:"#444",cursor:"pointer",fontSize:10,padding:"3px 7px",fontFamily:C.fontMono }}>↻</button>
         </div>
       </header>
 
-      {/* Backend offline notice */}
-      {!checking && !backendOnline && (
-        <div style={{
-          background: "#1a0a0a", borderBottom: "0.5px solid #5a1010",
-          padding: "10px 16px", textAlign: "center"
-        }}>
-          <span style={{ fontSize: 11, color: "#e74c3c", fontFamily: "'Share Tech Mono', monospace" }}>
-            Backend offline — run: <code style={{ background: "#2a0a0a", padding: "2px 6px", borderRadius: 3 }}>cd app && npm run backend</code>
-          </span>
-        </div>
-      )}
+      {/* Offline banner */}
+      {!checking&&!backendOnline&&<div style={{ background:"#0d0505",borderBottom:`0.5px solid #3a0a0a`,padding:"8px 16px",textAlign:"center" }}>
+        <span style={{ fontSize:10,color:C.red,fontFamily:C.fontMono }}>Backend offline — <code style={{ background:"#1a0505",padding:"1px 5px",borderRadius:2 }}>cd app && npm run backend</code></span>
+      </div>}
 
-      {/* Main layout — responsive */}
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: 16 }}>
-        {/* Mobile: columna única / PC: dos columnas */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
-          gap: 16,
-          alignItems: "start"
-        }}>
-          {/* Columna izquierda: chat, voz, comandos */}
-          <div>
-            <ChatPanel backendOnline={backendOnline} />
-            <VoicePanel />
-            <CommandPanel backendOnline={backendOnline} />
-          </div>
+      {/* Tabs */}
+      <nav style={{ background:C.bg1,borderBottom:`0.5px solid ${C.border}`,padding:"0 12px",display:"flex",gap:0,overflowX:"auto" }}>
+        {TABS.map(tab=><button key={tab.id} onClick={()=>setActiveTab(tab.id)} style={{ background:"transparent",border:"none",borderBottom:`2px solid ${activeTab===tab.id?C.red:"transparent"}`,padding:"10px 12px",cursor:"pointer",color:activeTab===tab.id?C.red:"#555",fontFamily:C.fontMono,fontSize:9,letterSpacing:"0.08em",whiteSpace:"nowrap",transition:"all 0.15s" }}>{tab.icon} {tab.label}</button>)}
+      </nav>
 
-          {/* Columna derecha: tareas, seguridad, memoria */}
-          <div>
-            <TaskQueue />
-            <SecurityPanel />
-            <MemoryPanel backendOnline={backendOnline} />
+      {/* Content */}
+      <main style={{ maxWidth:1100,margin:"0 auto",padding:12 }}>
+
+        {activeTab === "command" && (
+          <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(320px, 1fr))",gap:12,alignItems:"start" }}>
+            <div>
+              <ChatPanel backendOnline={backendOnline} activeModel={activeModel} setActiveModel={setActiveModel} />
+              <VoicePanel />
+              <CommandPanel backendOnline={backendOnline} />
+            </div>
+            <div>
+              <TaskQueue />
+              <MemoryPanel backendOnline={backendOnline} />
+              <SecurityPanel backendInfo={backendInfo} />
+              <ConsumptionPanel backendOnline={backendOnline} />
+            </div>
           </div>
-        </div>
+        )}
+
+        {activeTab === "workspace" && <WorkspacePanel />}
+        {activeTab === "meetings" && <MeetingPanel backendOnline={backendOnline} />}
+        {activeTab === "knowledge" && <KnowledgePanel backendOnline={backendOnline} />}
+        {activeTab === "agents" && <AgentsPanel backendOnline={backendOnline} />}
+        {activeTab === "ecosystem" && <EcosystemPanel />}
+        {activeTab === "voice" && <VoiceCompanion onCommand={handleVoiceCommand} backendOnline={backendOnline} />}
+        {activeTab === "tools" && <ExternalToolsPanel />}
 
         {/* Footer */}
-        <div style={{
-          marginTop: 20, padding: "14px 16px",
-          background: "#0d0d0d", border: "0.5px solid #1a1a1a",
-          borderRadius: 6, display: "flex",
-          justifyContent: "space-between", alignItems: "center",
-          flexWrap: "wrap", gap: 8
-        }}>
-          <span style={{ fontSize: 10, color: "#c0392b", fontFamily: "'Share Tech Mono', monospace", letterSpacing: "0.08em" }}>
-            ULTRON v1.2 MOBILE BACKEND FOUNDATION READY
-          </span>
-          <span style={{ fontSize: 10, color: "#444", fontFamily: "'Share Tech Mono', monospace" }}>
-            NEXT → ULTRON v1.3 — Claude Proxy + Controlled Chat Brain
-          </span>
+        <div style={{ marginTop:12,padding:"12px 16px",background:C.bg1,border:`0.5px solid ${C.border}`,borderRadius:6,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8 }}>
+          <span style={{ fontSize:9,color:C.red,fontFamily:C.fontMono,letterSpacing:"0.1em" }}>ULTRON v2.7 — AETHERNOVA FULL OPERATOR STACK</span>
+          <span style={{ fontSize:9,color:"#333",fontFamily:C.fontMono }}>NEXT → FINAL: KEYS + CONSUMPTION LOGIC</span>
         </div>
       </main>
     </div>
-  );
+  </>;
 }
