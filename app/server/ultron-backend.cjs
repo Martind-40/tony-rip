@@ -1091,6 +1091,24 @@ Return only the distilled knowledge:`;
       return;
     }
 
+
+    // Task content scan
+    const DANGEROUS_TASK_PATTERNS = [
+      /\brm\s+-rf/i, /\bsudo\b/i, /\bchmod\b/i, /\bgit\s+push/i,
+      /\bcurl\s+http/i, /\bwget\b/i, /\.env\b/i, /\bpassword\b/i,
+      /\bapi.?key\b/i, /\bsecret\b/i, /\bcredential\b/i,
+      /[;&|]{2}/, /\$\(/, /\beval\s*\(/i, /\bspawn\s*\(/i
+    ];
+    const taskScan = (agent.task + " " + agent.name).toLowerCase();
+    if (DANGEROUS_TASK_PATTERNS.some(p => p.test(taskScan))) {
+      agents[idx].status = "BLOCKED";
+      agents[idx].updated = new Date().toISOString();
+      saveAgents(agents);
+      addLog("agent_blocked_scan", { id: agentId });
+      send(res, 403, { ok: false, blocked: true, reason: "Task content scan failed — dangerous pattern. Agent blocked." }, origin);
+      return;
+    }
+
     // Set to EXECUTING
     agents[idx].status = "EXECUTING";
     agents[idx].updated = new Date().toISOString();
