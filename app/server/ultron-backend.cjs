@@ -1290,6 +1290,66 @@ Respond in the same language as the task description.`;
     return;
   }
 
+
+  // GET /api/consumption/summary
+  if (method === "GET" && url === "/api/consumption/summary") {
+    if (!requireToken(req, res, origin)) return;
+    const data = loadConsumptionLog();
+    const today = new Date().toISOString().split("T")[0];
+    const thisMonth = new Date().toISOString().slice(0, 7);
+    const limits = data.limits || {};
+
+    const todayEntries = data.log.filter(e => e.timestamp?.startsWith(today));
+    const monthEntries = data.log.filter(e => e.timestamp?.startsWith(thisMonth));
+
+    // By provider
+    const byProvider = {};
+    for (const entry of data.log) {
+      const p = entry.provider || "unknown";
+      if (!byProvider[p]) byProvider[p] = { calls: 0, cost: 0 };
+      byProvider[p].calls++;
+      byProvider[p].cost += entry.cost_estimated || 0;
+    }
+
+    // By provider this month
+    const byProviderMonth = {};
+    for (const entry of monthEntries) {
+      const p = entry.provider || "unknown";
+      if (!byProviderMonth[p]) byProviderMonth[p] = { calls: 0, cost: 0 };
+      byProviderMonth[p].calls++;
+      byProviderMonth[p].cost += entry.cost_estimated || 0;
+    }
+
+    const todayCalls = todayEntries.length;
+    const todayCost = todayEntries.reduce((s, e) => s + (e.cost_estimated || 0), 0);
+    const monthCalls = monthEntries.length;
+    const monthCost = monthEntries.reduce((s, e) => s + (e.cost_estimated || 0), 0);
+    const totalCalls = data.log.length;
+    const totalCost = data.log.reduce((s, e) => s + (e.cost_estimated || 0), 0);
+
+    send(res, 200, {
+      ok: true,
+      today: {
+        calls: todayCalls, cost: Math.round(todayCost * 100000) / 100000,
+        calls_limit: limits.max_calls_per_day || 50,
+        cost_limit: limits.max_daily_cost_usd || 1.00,
+        calls_pct: Math.round((todayCalls / (limits.max_calls_per_day || 50)) * 100),
+        cost_pct: Math.round((todayCost / (limits.max_daily_cost_usd || 1.00)) * 100)
+      },
+      month: {
+        calls: monthCalls, cost: Math.round(monthCost * 100000) / 100000,
+        budget: limits.max_monthly_budget_usd || 20.00,
+        cost_pct: Math.round((monthCost / (limits.max_monthly_budget_usd || 20.00)) * 100)
+      },
+      total: { calls: totalCalls, cost: Math.round(totalCost * 100000) / 100000 },
+      by_provider: byProvider,
+      by_provider_month: byProviderMonth,
+      recent: data.log.slice(0, 10),
+      limits
+    }, origin);
+    return;
+  }
+
   send(res, 404, { ok: false, reason: "Endpoint not found." }, origin);
 }
 
