@@ -404,7 +404,7 @@ async function trackedRouteToAI(message, requestedModel, options = {}) {
   const taskType = options.taskType || "chat";
   const result = await routeToAI(message, requestedModel, options);
   try {
-    DB.logTask({
+    await DB.logTask({
       task_type: taskType,
       prompt: message,
       success: Boolean(result.ok),
@@ -583,7 +583,7 @@ async function router(req, res) {
   if (method === "GET" && url === "/api/db/memories") {
     if (!requireToken(req, res, origin)) return;
     try {
-      send(res, 200, { ok: true, mode: DB.mode, memories: DB.listMemories() }, origin);
+      send(res, 200, { ok: true, mode: DB.mode, memories: await DB.listMemories() }, origin);
     } catch (err) {
       send(res, 500, { ok: false, reason: err.message }, origin);
     }
@@ -599,7 +599,7 @@ async function router(req, res) {
       return;
     }
     try {
-      const memory = DB.addMemory(body);
+      const memory = await DB.addMemory(body);
       send(res, 200, { ok: true, mode: DB.mode, memory }, origin);
     } catch (err) {
       send(res, 403, { ok: false, reason: err.message }, origin);
@@ -611,7 +611,7 @@ async function router(req, res) {
   if (method === "GET" && url === "/api/db/patterns") {
     if (!requireToken(req, res, origin)) return;
     try {
-      send(res, 200, { ok: true, mode: DB.mode, patterns: DB.listPatterns() }, origin);
+      send(res, 200, { ok: true, mode: DB.mode, patterns: await DB.listPatterns() }, origin);
     } catch (err) {
       send(res, 500, { ok: false, reason: err.message }, origin);
     }
@@ -623,7 +623,7 @@ async function router(req, res) {
     if (!requireToken(req, res, origin)) return;
     const body = await parseBody(req);
     try {
-      const task = DB.logTask(body);
+      const task = await DB.logTask(body);
       send(res, 200, { ok: true, mode: DB.mode, task }, origin);
     } catch (err) {
       send(res, 403, { ok: false, reason: err.message }, origin);
@@ -635,7 +635,7 @@ async function router(req, res) {
   if (method === "GET" && url === "/api/db/stats") {
     if (!requireToken(req, res, origin)) return;
     try {
-      send(res, 200, { ok: true, mode: DB.mode, ...DB.stats() }, origin);
+      send(res, 200, { ok: true, mode: DB.mode, ...await DB.stats() }, origin);
     } catch (err) {
       send(res, 500, { ok: false, reason: err.message }, origin);
     }
@@ -948,7 +948,7 @@ Respond in the same language as the meeting notes. Be concise and actionable. Us
             const tokens = data.usage?.total_tokens || 0;
             logConsumption({ provider: "openai", model: "gpt-4o-mini", tokens_used: tokens, cost_estimated: Math.round((tokens / 1000000) * 150 * 10000) / 10000, call_type: "vision" });
             try {
-              DB.logTask({
+              await DB.logTask({
                 task_type: "photo",
                 prompt: filename,
                 success: true,

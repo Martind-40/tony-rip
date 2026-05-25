@@ -153,12 +153,37 @@ function buildStats(rows) {
   };
 }
 
-function createSqliteDb() {
-  const Database = require("better-sqlite3");
+async function createSqlJsDb() {
+  const initSqlJs = require("sql.js");
   if (!fs.existsSync(RUNTIME_ROOT)) fs.mkdirSync(RUNTIME_ROOT, { recursive: true });
-  const db = new Database(DB_PATH);
-  db.pragma("journal_mode = WAL");
-  db.exec(`
+  const SQL = await initSqlJs({
+    locateFile: file => path.join(PROJECT_ROOT, "app", "node_modules", "sql.js", "dist", file)
+  });
+  const db = fs.existsSync(DB_PATH)
+    ? new SQL.Database(fs.readFileSync(DB_PATH))
+    : new SQL.Database();
+
+  function persist() {
+    fs.writeFileSync(DB_PATH, Buffer.from(db.export()));
+  }
+
+  function rows(sql, params = []) {
+    const stmt = db.prepare(sql);
+    const out = [];
+    try {
+      stmt.bind(params);
+      while (stmt.step()) out.push(stmt.getAsObject());
+    } finally {
+      stmt.free();
+    }
+    return out;
+  }
+
+  function first(sql, params = []) {
+    return rows(sql, params)[0] || {};
+  }
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS memories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       type TEXT NOT NULL,
@@ -186,27 +211,28 @@ function createSqliteDb() {
       success_rate REAL NOT NULL DEFAULT 0
     );
   `);
+  persist();
 
   function updatePattern(actionType) {
-    const stats = db.prepare(`
+    const stats = first(`
       SELECT COUNT(*) AS count, AVG(success) AS success_rate
       FROM task_log
       WHERE task_type = ?
-    `).get(actionType);
-    db.prepare(`
+    `, [actionType]);
+    db.run(`
       INSERT INTO usage_patterns (action_type, count, last_used, success_rate)
       VALUES (?, ?, ?, ?)
       ON CONFLICT(action_type) DO UPDATE SET
         count = excluded.count,
         last_used = excluded.last_used,
         success_rate = excluded.success_rate
-    `).run(actionType, stats.count || 0, now(), Number(stats.success_rate) || 0);
+    `, [actionType, stats.count || 0, now(), Number(stats.success_rate) || 0]);
   }
 
   return {
-    mode: "sqlite",
+    mode: "sqljs",
     listMemories() {
-      return db.prepare("SELECT * FROM memories WHERE approved = 1 ORDER BY created_at DESC LIMIT 100").all();
+      return rows("SELECT * FROM memories WHERE approved = 1 ORDER BY created_at DESC LIMIT 100");
     },
     addMemory(input) {
       if (hasSensitiveData(input.content) || hasSensitiveData(input.source)) {
@@ -220,14 +246,16 @@ function createSqliteDb() {
         created_at: now(),
         approved: input.approved ? 1 : 0
       };
-      const info = db.prepare(`
+      db.run(`
         INSERT INTO memories (type, content, source, importance, created_at, approved)
-        VALUES (@type, @content, @source, @importance, @created_at, @approved)
-      `).run(row);
-      return { id: info.lastInsertRowid, ...row };
+        VALUES (?, ?, ?, ?, ?, ?)
+      `, [row.type, row.content, row.source, row.importance, row.created_at, row.approved]);
+      const info = first("SELECT last_insert_rowid() AS id");
+      persist();
+      return { id: info.id, ...row };
     },
     listPatterns() {
-      return db.prepare("SELECT * FROM usage_patterns ORDER BY count DESC, last_used DESC").all();
+      return rows("SELECT * FROM usage_patterns ORDER BY count DESC, last_used DESC");
     },
     logTask(input) {
       if (hasSensitiveData(input.prompt)) throw new Error("Sensitive data rejected.");
@@ -239,25 +267,42 @@ function createSqliteDb() {
         duration_ms: Math.max(0, Number(input.duration_ms) || 0),
         created_at: now()
       };
-      const info = db.prepare(`
+      db.run(`
         INSERT INTO task_log (task_type, prompt, success, provider, duration_ms, created_at)
-        VALUES (@task_type, @prompt, @success, @provider, @duration_ms, @created_at)
-      `).run(row);
+        VALUES (?, ?, ?, ?, ?, ?)
+      `, [row.task_type, row.prompt, row.success, row.provider, row.duration_ms, row.created_at]);
+      const info = first("SELECT last_insert_rowid() AS id");
       updatePattern(row.task_type);
-      return { id: info.lastInsertRowid, ...row };
+      persist();
+      return { id: info.id, ...row };
     },
     stats() {
-      return buildStats(db.prepare("SELECT task_type, success, provider, duration_ms FROM task_log").all());
+      return buildStats(rows("SELECT task_type, success, provider, duration_ms FROM task_log"));
     }
   };
 }
 
 function createDb() {
-  try {
-    return createSqliteDb();
-  } catch {
-    return createJsonFallback();
-  }
+  const wrapper = {
+    mode: "sqljs_initializing",
+    ready: null,
+    async listMemories() { return (await wrapper.ready).listMemories(); },
+    async addMemory(input) { return (await wrapper.ready).addMemory(input); },
+    async listPatterns() { return (await wrapper.ready).listPatterns(); },
+    async logTask(input) { return (await wrapper.ready).logTask(input); },
+    async stats() { return (await wrapper.ready).stats(); }
+  };
+  wrapper.ready = createSqlJsDb()
+    .then(db => {
+      wrapper.mode = db.mode;
+      return db;
+    })
+    .catch(() => {
+      const fallback = createJsonFallback();
+      wrapper.mode = fallback.mode;
+      return fallback;
+    });
+  return wrapper;
 }
 
 module.exports = { createDb, hasSensitiveData };
