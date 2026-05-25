@@ -92,14 +92,18 @@ function checkLimits({ estimatedCost = 0, estimatedTokens = 0 } = {}) {
     .filter(e => e.timestamp?.startsWith(month))
     .reduce((s, e) => s + (e.cost_estimated || 0), 0);
   const limits = data.limits || {};
-  if (todayCalls >= (limits.max_calls_per_day || 50)) return { blocked: true, reason: "Daily call limit reached." };
+  const maxCallsPerDay = limits.max_calls_per_day ?? 50;
+  const maxTokensPerRequest = limits.max_tokens_per_request ?? 2000;
+  const maxDailyCostUsd = limits.max_daily_cost_usd ?? 1.00;
+  const maxMonthlyBudgetUsd = limits.max_monthly_budget_usd ?? 20.00;
+  if (todayCalls >= maxCallsPerDay) return { blocked: true, reason: "Daily call limit reached." };
   const todayCost = data.log.filter(e => e.timestamp?.startsWith(today)).reduce((s, e) => s + (e.cost_estimated || 0), 0);
-  if (estimatedTokens > (limits.max_tokens_per_request || 2000)) return { blocked: true, reason: "Max tokens per request exceeded." };
-  if (todayCost + estimatedCost > (limits.max_daily_cost_usd || 1.00)) return { blocked: true, reason: "Daily cost limit reached." };
-  if (monthCost + estimatedCost > (limits.max_monthly_budget_usd || 20.00)) return { blocked: true, reason: "Monthly budget limit reached." };
+  if (estimatedTokens > maxTokensPerRequest) return { blocked: true, reason: "Max tokens per request exceeded." };
+  if (todayCost + estimatedCost > maxDailyCostUsd) return { blocked: true, reason: "Daily cost limit reached." };
+  if (monthCost + estimatedCost > maxMonthlyBudgetUsd) return { blocked: true, reason: "Monthly budget limit reached." };
   const warnings = [];
-  if (todayCost + estimatedCost >= (limits.max_daily_cost_usd || 1.00) * 0.8) warnings.push("Daily cost is at or above 80%.");
-  if (monthCost + estimatedCost >= (limits.max_monthly_budget_usd || 20.00) * 0.8) warnings.push("Monthly budget is at or above 80%.");
+  if (todayCost + estimatedCost >= maxDailyCostUsd * 0.8) warnings.push("Daily cost is at or above 80%.");
+  if (monthCost + estimatedCost >= maxMonthlyBudgetUsd * 0.8) warnings.push("Monthly budget is at or above 80%.");
   return { blocked: false, warnings };
 }
 
