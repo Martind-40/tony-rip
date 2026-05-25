@@ -859,6 +859,132 @@ Respond in the same language as the meeting notes. Be concise and actionable. Us
     return;
   }
 
+
+  // POST /api/knowledge/distill
+  if (method === "POST" && url === "/api/knowledge/distill") {
+    if (!requireToken(req, res, origin)) return;
+    const body = await parseBody(req);
+    const { content, type, source, approved } = body;
+
+    if (!content || !content.trim()) {
+      send(res, 400, { ok: false, reason: "content required." }, origin);
+      return;
+    }
+
+    const VALID_TYPES = ["learning", "pattern", "decision", "insight", "task"];
+    const VALID_SOURCES = ["meeting", "photo", "idea", "report", "manual"];
+    const safeType = VALID_TYPES.includes(type) ? type : "learning";
+    const safeSource = VALID_SOURCES.includes(source) ? source : "manual";
+
+    // Sensitivity check
+    const SENSITIVE = [/\bpassword\b/gi, /\bcontraseña\b/gi, /\btoken\b/gi, /sk-[a-zA-Z0-9]+/g, /api[_-]?key/gi, /\bcredential\b/gi];
+    const found = SENSITIVE.flatMap(p => content.match(p) || []);
+    if (found.length > 0) {
+      send(res, 403, { ok: false, blocked: true, reason: "Sensitive data detected. Remove before distilling.", detected: found.slice(0, 3) }, origin);
+      return;
+    }
+
+    // Distill with AI if available
+    let distilled = content.trim();
+    let provider = "local";
+
+    try {
+      const prompt = `You are ULTRON Knowledge Distiller. Extract pure reusable knowledge from this input.
+Type: ${safeType} | Source: ${safeSource}
+
+Rules:
+- Remove all sensitive data (names, credentials, private details)
+- Extract only the reusable insight or lesson
+- Be concise: 1-3 sentences maximum
+- No markdown, no bullets — plain text only
+- Same language as input
+
+Input: "${content.slice(0, 800)}"
+
+Return only the distilled knowledge:`;
+
+      const aiResult = await routeToAI(prompt, null);
+      if (aiResult.ok && aiResult.provider !== "local_rules") {
+        distilled = aiResult.message.trim();
+        provider = aiResult.provider;
+      }
+    } catch { /* use original */ }
+
+    // If not yet approved, return for human review
+    if (!approved) {
+      send(res, 200, {
+        ok: true,
+        status: "PENDING_APPROVAL",
+        distilled,
+        provider,
+        type: safeType,
+        source: safeSource,
+        message: "Review distilled content and resubmit with approved: true to save."
+      }, origin);
+      return;
+    }
+
+    // Save to knowledge/distilled_lessons.md
+    const date = new Date().toISOString().split("T")[0];
+    const time = new Date().toISOString();
+    const entry = `
+## [${safeType.toUpperCase()}] ${date}
+- **Source**: ${safeSource}
+- **Provider**: ${provider}
+- **Status**: APPROVED
+- **Content**: ${distilled}
+- **Saved**: ${time}
+
+`;
+
+    try {
+      const knowledgePath = path.join(PROJECT_ROOT, "knowledge", "distilled_lessons.md");
+      if (!fs.existsSync(path.dirname(knowledgePath))) {
+        fs.mkdirSync(path.dirname(knowledgePath), { recursive: true });
+      }
+      fs.appendFileSync(knowledgePath, entry);
+      addLog("knowledge_distill", { type: safeType, source: safeSource, provider, approved: true });
+      send(res, 200, { ok: true, status: "SAVED", distilled, provider, type: safeType, source: safeSource, savedAt: time }, origin);
+    } catch (err) {
+      send(res, 500, { ok: false, reason: "Failed to save: " + err.message }, origin);
+    }
+    return;
+  }
+
+  // GET /api/knowledge/list
+  if (method === "GET" && url === "/api/knowledge/list") {
+    if (!requireToken(req, res, origin)) return;
+    const knowledgePath = path.join(PROJECT_ROOT, "knowledge", "distilled_lessons.md");
+    try {
+      if (!fs.existsSync(knowledgePath)) {
+        send(res, 200, { ok: true, count: 0, entries: [], raw: "" }, origin);
+        return;
+      }
+      const raw = fs.readFileSync(knowledgePath, "utf8");
+      // Parse entries
+      const entries = [];
+      const blocks = raw.split(/^## /m).filter(b => b.trim());
+      for (const block of blocks) {
+        const typeMatch = block.match(/^\[([A-Z]+)\]/);
+        const dateMatch = block.match(/\d{4}-\d{2}-\d{2}/);
+        const contentMatch = block.match(/\*\*Content\*\*: (.+)/);
+        const sourceMatch = block.match(/\*\*Source\*\*: (.+)/);
+        if (typeMatch && contentMatch) {
+          entries.push({
+            type: typeMatch[1].toLowerCase(),
+            date: dateMatch ? dateMatch[0] : "unknown",
+            content: contentMatch[1].trim(),
+            source: sourceMatch ? sourceMatch[1].trim() : "unknown"
+          });
+        }
+      }
+      send(res, 200, { ok: true, count: entries.length, entries: entries.slice(0, 50) }, origin);
+    } catch (err) {
+      send(res, 500, { ok: false, reason: err.message }, origin);
+    }
+    return;
+  }
+
   send(res, 404, { ok: false, reason: "Endpoint not found." }, origin);
 }
 
