@@ -301,6 +301,48 @@ export default function UltronMobile() {
   const [activeModel, setActiveModel] = useState("auto");
   const [activeTab, setActiveTab] = useState("command");
 
+  // ── Persistent session ────────────────────────────────
+  const [sessionLoaded, setSessionLoaded] = useState(false);
+  const [sessionSavedAt, setSessionSavedAt] = useState(null);
+
+  const loadSession = useCallback(async () => {
+    if (!backendOnline) return;
+    try {
+      const res = await authFetch("/api/session/load");
+      const data = await res.json();
+      if (data.ok && data.exists && data.state) {
+        // Restore active model if saved
+        if (data.state.activeModel) setActiveModel(data.state.activeModel);
+        if (data.state.activeTab) setActiveTab(data.state.activeTab);
+        setSessionSavedAt(data.state._savedAt || null);
+        setSessionLoaded(true);
+      }
+    } catch { /* silent */ }
+  }, [backendOnline]);
+
+  const saveSession = useCallback(async () => {
+    if (!backendOnline) return;
+    try {
+      await authFetch("/api/session/save", {
+        method: "POST",
+        body: JSON.stringify({ state: { activeModel, activeTab, _client: "UltronMobile" } })
+      });
+      setSessionSavedAt(new Date().toISOString());
+    } catch { /* silent */ }
+  }, [backendOnline, activeModel, activeTab]);
+
+  // Load session when backend comes online
+  useEffect(() => { if (backendOnline && !sessionLoaded) loadSession(); }, [backendOnline, sessionLoaded, loadSession]);
+
+  // Auto-save session every 60 seconds
+  useEffect(() => {
+    if (!backendOnline) return;
+    const interval = setInterval(saveSession, 60000);
+    return () => clearInterval(interval);
+  }, [backendOnline, saveSession]);
+
+
+
   const checkHealth = useCallback(async () => {
     try {
       const res = await fetch(`${BACKEND_URL}/api/health`, { signal: AbortSignal.timeout(2500) });
@@ -336,6 +378,7 @@ export default function UltronMobile() {
             <Dot on={backendOnline} pulse={backendOnline} />
             <span style={{ fontSize:9,color:checking?"#444":backendOnline?C.red:"#444",fontFamily:C.fontMono }}>{checking?"CHK":backendOnline?"ONLINE":"OFFLINE"}</span>
           </div>
+          <button onClick={saveSession} title="Save session" style={{ background:"transparent",border:`0.5px solid ${C.border}`,borderRadius:3,color:"#333",cursor:"pointer",fontSize:10,padding:"3px 7px",fontFamily:C.fontMono }}>💾</button>
           <button onClick={checkHealth} style={{ background:"transparent",border:`0.5px solid ${C.border}`,borderRadius:3,color:"#444",cursor:"pointer",fontSize:10,padding:"3px 7px",fontFamily:C.fontMono }}>↻</button>
         </div>
       </header>

@@ -788,6 +788,77 @@ Respond in the same language as the meeting notes. Be concise and actionable. Us
     return;
   }
 
+
+  // GET /api/session/load
+  if (method === "GET" && url === "/api/session/load") {
+    if (!requireToken(req, res, origin)) return;
+    const sessionPath = path.join(PROJECT_ROOT, "runtime", "session_state.json");
+    try {
+      if (!fs.existsSync(sessionPath)) {
+        send(res, 200, { ok: true, exists: false, state: null }, origin);
+        return;
+      }
+      const state = JSON.parse(fs.readFileSync(sessionPath, "utf8"));
+      send(res, 200, { ok: true, exists: true, state, savedAt: state._savedAt || null }, origin);
+    } catch (err) {
+      send(res, 500, { ok: false, reason: "Failed to load session: " + err.message }, origin);
+    }
+    return;
+  }
+
+  // POST /api/session/save
+  if (method === "POST" && url === "/api/session/save") {
+    if (!requireToken(req, res, origin)) return;
+    const body = await parseBody(req);
+    const { state } = body;
+
+    if (!state || typeof state !== "object") {
+      send(res, 400, { ok: false, reason: "state object required." }, origin);
+      return;
+    }
+
+    // Security: strip any sensitive fields before saving
+    const BLOCKED_KEYS = ["password", "token", "key", "secret", "credential", "apiKey"];
+    function stripSensitive(obj, depth = 0) {
+      if (depth > 5) return obj;
+      if (typeof obj !== "object" || obj === null) return obj;
+      const clean = Array.isArray(obj) ? [] : {};
+      for (const [k, v] of Object.entries(obj)) {
+        if (BLOCKED_KEYS.some(bk => k.toLowerCase().includes(bk))) continue;
+        clean[k] = typeof v === "object" ? stripSensitive(v, depth + 1) : v;
+      }
+      return clean;
+    }
+
+    const cleanState = stripSensitive(state);
+    cleanState._savedAt = new Date().toISOString();
+    cleanState._version = "v2.7";
+
+    const sessionPath = path.join(PROJECT_ROOT, "runtime", "session_state.json");
+    try {
+      fs.writeFileSync(sessionPath, JSON.stringify(cleanState, null, 2));
+      addLog("session_save", { keys: Object.keys(cleanState).length });
+      send(res, 200, { ok: true, savedAt: cleanState._savedAt, keys: Object.keys(cleanState).length }, origin);
+    } catch (err) {
+      send(res, 500, { ok: false, reason: "Failed to save session: " + err.message }, origin);
+    }
+    return;
+  }
+
+  // DELETE /api/session/clear
+  if (method === "DELETE" && url === "/api/session/clear") {
+    if (!requireToken(req, res, origin)) return;
+    const sessionPath = path.join(PROJECT_ROOT, "runtime", "session_state.json");
+    try {
+      if (fs.existsSync(sessionPath)) fs.unlinkSync(sessionPath);
+      addLog("session_clear", {});
+      send(res, 200, { ok: true, message: "Session cleared." }, origin);
+    } catch (err) {
+      send(res, 500, { ok: false, reason: err.message }, origin);
+    }
+    return;
+  }
+
   send(res, 404, { ok: false, reason: "Endpoint not found." }, origin);
 }
 
