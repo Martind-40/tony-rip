@@ -1160,6 +1160,136 @@ Respond in the same language as the task description.`;
     return;
   }
 
+
+  // ── ECOSYSTEM ROUTER ─────────────────────────────────────
+  const ECOSYSTEM_LOG_PATH = path.join(PROJECT_ROOT, "runtime", "ecosystem_routing_log.json");
+  const ECOSYSTEM_EXPORTS_PATH = path.join(PROJECT_ROOT, "knowledge", "ecosystem_exports");
+
+  const VALID_ROUTES = {
+    "ideas_negocio": { destination: "coco_venture", name: "Coco Venture", icon: "🚀" },
+    "oportunidades_mercado": { destination: "coco_venture", name: "Coco Venture", icon: "🚀" },
+    "modelo_comercial": { destination: "coco_venture", name: "Coco Venture", icon: "🚀" },
+    "simulacion_b2b": { destination: "aether_colony", name: "AetherColony", icon: "🔬" },
+    "validacion_comercial": { destination: "aether_colony", name: "AetherColony", icon: "🔬" },
+    "escenarios": { destination: "aether_colony", name: "AetherColony", icon: "🔬" },
+    "memoria_estrategica": { destination: "aether_mind", name: "AetherMind", icon: "🧠" },
+    "decisiones": { destination: "aether_mind", name: "AetherMind", icon: "🧠" },
+    "arquitectura": { destination: "aether_mind", name: "AetherMind", icon: "🧠" },
+    "comando_diario": { destination: "ultron", name: "ULTRON", icon: "⚡" },
+    "tareas": { destination: "ultron", name: "ULTRON", icon: "⚡" },
+    "operacion": { destination: "ultron", name: "ULTRON", icon: "⚡" }
+  };
+
+  function loadEcosystemLog() {
+    try { return fs.existsSync(ECOSYSTEM_LOG_PATH) ? JSON.parse(fs.readFileSync(ECOSYSTEM_LOG_PATH, "utf8")) : []; }
+    catch { return []; }
+  }
+
+  function saveEcosystemLog(log) {
+    try {
+      if (!fs.existsSync(path.dirname(ECOSYSTEM_LOG_PATH))) fs.mkdirSync(path.dirname(ECOSYSTEM_LOG_PATH), { recursive: true });
+      fs.writeFileSync(ECOSYSTEM_LOG_PATH, JSON.stringify(log.slice(0, 100), null, 2));
+    } catch { /* best effort */ }
+  }
+
+  // POST /api/ecosystem/route
+  if (method === "POST" && url === "/api/ecosystem/route") {
+    if (!requireToken(req, res, origin)) return;
+    const body = await parseBody(req);
+    const { content, route_type, distilled, approved } = body;
+
+    if (!content || !content.trim()) {
+      send(res, 400, { ok: false, reason: "content required." }, origin);
+      return;
+    }
+
+    if (!route_type || !VALID_ROUTES[route_type]) {
+      send(res, 400, { ok: false, reason: `Invalid route_type. Valid: ${Object.keys(VALID_ROUTES).join(", ")}` }, origin);
+      return;
+    }
+
+    // CRITICAL: Only distilled content can be routed
+    if (!distilled) {
+      send(res, 403, { ok: false, blocked: true, reason: "Only distilled knowledge can be routed. Pass distilled: true to confirm content has been through Knowledge Distiller." }, origin);
+      return;
+    }
+
+    // Sensitivity check on content
+    const SENSITIVE = [/\bpassword\b/gi, /\btoken\b/gi, /sk-[a-zA-Z0-9]+/g, /api[_-]?key/gi, /\bcredential\b/gi];
+    const found = SENSITIVE.flatMap(p => content.match(p) || []);
+    if (found.length > 0) {
+      send(res, 403, { ok: false, blocked: true, reason: "Sensitive data detected in content. Cannot route to ecosystem.", detected: found.slice(0, 3) }, origin);
+      return;
+    }
+
+    // Human approval required
+    if (!approved) {
+      send(res, 200, {
+        ok: true, status: "PENDING_APPROVAL",
+        route_type, destination: VALID_ROUTES[route_type],
+        content: content.slice(0, 200),
+        message: "Review and resubmit with approved: true to complete routing."
+      }, origin);
+      return;
+    }
+
+    const destination = VALID_ROUTES[route_type];
+    const timestamp = new Date().toISOString();
+    const date = timestamp.split("T")[0];
+
+    // Save export file to knowledge/ecosystem_exports/
+    let exportFile = null;
+    try {
+      if (!fs.existsSync(ECOSYSTEM_EXPORTS_PATH)) fs.mkdirSync(ECOSYSTEM_EXPORTS_PATH, { recursive: true });
+      const slug = route_type.replace(/_/g, "-");
+      const filename = `${date}-${slug}-${destination.destination}.md`;
+      const exportPath = path.join(ECOSYSTEM_EXPORTS_PATH, filename);
+      const exportContent = `# Ecosystem Export — ${destination.name}\nDate: ${date} | Route: ${route_type}\n\n## Content\n${content}\n\n---\n*Routed by ULTRON v2.7 — Distilled knowledge only*\n*Status: APPROVED | Destination: ${destination.name}*\n`;
+      fs.writeFileSync(exportPath, exportContent);
+      exportFile = filename;
+    } catch { exportFile = null; }
+
+    // Log the routing
+    const entry = {
+      id: `ROUTE-${Date.now().toString(36).toUpperCase()}`,
+      timestamp, date, route_type,
+      destination: destination.destination,
+      destination_name: destination.name,
+      content_preview: content.slice(0, 150),
+      distilled: true, approved: true,
+      export_file: exportFile,
+      status: "ROUTED"
+    };
+
+    const log = loadEcosystemLog();
+    log.unshift(entry);
+    saveEcosystemLog(log);
+    addLog("ecosystem_route", { route_type, destination: destination.destination });
+
+    send(res, 200, {
+      ok: true, status: "ROUTED",
+      id: entry.id, route_type,
+      destination, exportFile, timestamp,
+      message: `Knowledge routed to ${destination.name}. Export saved to knowledge/ecosystem_exports/${exportFile || "N/A"}`
+    }, origin);
+    return;
+  }
+
+  // GET /api/ecosystem/log
+  if (method === "GET" && url === "/api/ecosystem/log") {
+    if (!requireToken(req, res, origin)) return;
+    const log = loadEcosystemLog();
+    send(res, 200, { ok: true, count: log.length, routes: log.slice(0, 30) }, origin);
+    return;
+  }
+
+  // GET /api/ecosystem/routes
+  if (method === "GET" && url === "/api/ecosystem/routes") {
+    if (!requireToken(req, res, origin)) return;
+    send(res, 200, { ok: true, routes: VALID_ROUTES }, origin);
+    return;
+  }
+
   send(res, 404, { ok: false, reason: "Endpoint not found." }, origin);
 }
 
