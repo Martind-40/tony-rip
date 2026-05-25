@@ -13,6 +13,22 @@ const CONFIG_PATH = path.join(PROJECT_ROOT, "runtime", "runtime_config.json");
 const CONSUMPTION_LOG_PATH = path.join(PROJECT_ROOT, "runtime", "consumption_log.json");
 const ROUTER_POLICY_PATH = path.join(__dirname, "router_policy.json");
 const MEMORY_ROOT = path.join(PROJECT_ROOT, "memory");
+const WORKSPACE_ROOT = path.join(PROJECT_ROOT, "workspace");
+const WORKSPACE_FOLDERS = ["meetings", "photos", "ideas", "reports", "archive"];
+const READABLE_EXTENSIONS = [".md", ".txt", ".json", ".csv", ".log", ".html"];
+
+function isInsideWorkspace(targetPath) {
+  const resolved = path.resolve(targetPath);
+  const wsRoot = path.resolve(WORKSPACE_ROOT);
+  return resolved === wsRoot || resolved.startsWith(wsRoot + path.sep);
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + "B";
+  if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + "KB";
+  return Math.round(bytes / (1024 * 1024)) + "MB";
+}
+
 
 // ── Env local ────────────────────────────────────────────
 const ENV_PATH = path.join(__dirname, ".env");
@@ -519,6 +535,86 @@ async function router(req, res) {
   if (method === "GET" && url === "/api/logs") {
     if (!requireToken(req, res, origin)) return;
     send(res, 200, { ok: true, count: sessionLogs.length, logs: sessionLogs }, origin);
+    return;
+  }
+
+
+  // GET /api/workspace/list/:folder
+  if (method === "GET" && url.startsWith("/api/workspace/list/")) {
+    if (!requireToken(req, res, origin)) return;
+    const folder = url.replace("/api/workspace/list/", "").split("?")[0];
+    if (!WORKSPACE_FOLDERS.includes(folder)) {
+      send(res, 403, { ok: false, blocked: true, reason: `Folder '${folder}' not in workspace whitelist.` }, origin);
+      return;
+    }
+    const folderPath = path.join(WORKSPACE_ROOT, folder);
+    try {
+      if (!fs.existsSync(folderPath)) {
+        fs.mkdirSync(folderPath, { recursive: true });
+      }
+      const entries = fs.readdirSync(folderPath, { withFileTypes: true });
+      const items = entries
+        .filter(e => e.isFile() && !e.name.startsWith("."))
+        .map(e => {
+          const filePath = path.join(folderPath, e.name);
+          const stats = fs.statSync(filePath);
+          const ext = path.extname(e.name).toLowerCase();
+          return {
+            name: e.name,
+            size: formatFileSize(stats.size),
+            modified: stats.mtime.toISOString().split("T")[0],
+            readable: READABLE_EXTENSIONS.includes(ext),
+            extension: ext
+          };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name));
+      addLog("workspace_list", { folder, count: items.length });
+      send(res, 200, { ok: true, folder, path: `workspace/${folder}`, count: items.length, items }, origin);
+    } catch (err) {
+      send(res, 500, { ok: false, reason: err.message }, origin);
+    }
+    return;
+  }
+
+  // GET /api/workspace/file/:folder/:filename
+  if (method === "GET" && url.startsWith("/api/workspace/file/")) {
+    if (!requireToken(req, res, origin)) return;
+    const parts = url.replace("/api/workspace/file/", "").split("/");
+    const folder = parts[0];
+    const filename = decodeURIComponent(parts.slice(1).join("/"));
+
+    if (!WORKSPACE_FOLDERS.includes(folder)) {
+      send(res, 403, { ok: false, blocked: true, reason: "Folder not in whitelist." }, origin);
+      return;
+    }
+
+    const dangerous = ["../", ".env", "secret", "key", "token", "credential", "password"];
+    for (const d of dangerous) {
+      if (filename.toLowerCase().includes(d)) {
+        send(res, 403, { ok: false, blocked: true, reason: "Access denied." }, origin);
+        return;
+      }
+    }
+
+    const filePath = path.join(WORKSPACE_ROOT, folder, filename);
+    if (!isInsideWorkspace(filePath)) {
+      send(res, 403, { ok: false, blocked: true, reason: "Path outside workspace." }, origin);
+      return;
+    }
+
+    const ext = path.extname(filename).toLowerCase();
+    if (!READABLE_EXTENSIONS.includes(ext)) {
+      send(res, 403, { ok: false, blocked: true, reason: `Extension '${ext}' not readable.` }, origin);
+      return;
+    }
+
+    try {
+      const content = fs.readFileSync(filePath, "utf8");
+      addLog("workspace_read", { folder, file: filename });
+      send(res, 200, { ok: true, folder, file: filename, content, size: formatFileSize(content.length) }, origin);
+    } catch {
+      send(res, 404, { ok: false, reason: `File not found: ${filename}` }, origin);
+    }
     return;
   }
 
