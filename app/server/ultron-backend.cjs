@@ -144,6 +144,7 @@ const AI_PROVIDER = process.env.AI_PROVIDER || "none";
 const OPENAI_KEY = process.env.OPENAI_API_KEY || "";
 const GEMINI_KEY = process.env.GEMINI_API_KEY || "";
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || "";
+const GROQ_KEY = process.env.GROQ_API_KEY || "";
 const IS_VERCEL = Boolean(process.env.VERCEL);
 
 // System prompt ULTRON
@@ -153,7 +154,17 @@ You help with work, knowledge, decisions and planning.
 You are not evil — but you are ruthlessly efficient.
 Keep responses concise and impactful. Max 3 sentences unless asked for more.
 Respond always in the same language the user writes in.
-Do not claim access to files, shell, secrets, private memory, email, calendar, or external systems.`;
+Do not claim access to files, shell, secrets, private memory, email, calendar, or external systems.
+
+ACTION SYSTEM: When the user's request clearly maps to a module, append ONE action tag at the END of your response:
+[ACTION:MEETING] — for meeting processing, transcripts, minutes
+[ACTION:DISTILL] — for knowledge distillation requests
+[ACTION:AGENTS] — for agent creation or task execution
+[ACTION:WORKSPACE] — for file/folder operations
+[ACTION:ECOSYSTEM] — for routing to Coco Venture, AetherMind, AetherColony
+[ACTION:COSTS] — for cost/consumption queries
+[ACTION:PHOTO] — for image/photo analysis
+Only use action tags when clearly appropriate. Never use more than one.`;
 
 async function callOpenAI(message, meta = {}) {
   if (!OPENAI_KEY) return { ok: false, status: "OPENAI_PROVIDER_NOT_CONFIGURED", message: "OpenAI API key not configured." };
@@ -453,6 +464,7 @@ async function router(req, res) {
       },
       claudeProxy: ANTHROPIC_KEY ? "READY_WITH_KEY" : "WAITING_FOR_KEY",
       openaiProxy: OPENAI_KEY ? "READY_WITH_KEY" : "WAITING_FOR_KEY",
+      groqProxy: GROQ_KEY ? "READY_WITH_KEY" : "WAITING_FOR_KEY",
       geminiProxy: GEMINI_KEY ? "READY_WITH_KEY" : "WAITING_FOR_KEY",
       execution: "dry_run_only", external_network: false, secrets_access: false,
       timestamp: new Date().toISOString()
