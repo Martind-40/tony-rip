@@ -1,11 +1,13 @@
-// ultron-backend.cjs — ULTRON v1.8
-// AI Provider Router: Nivel 0 (local) → 1 (Ollama) → 2 (Gemini) → 3 (OpenAI)
+// ultron-backend.cjs — ULTRON v2.8
+// AI Provider Router: Nivel 0 (local) → 1 (Ollama) → 2 (Gemini Flash) → 3 (OpenAI GPT-4o)
+// Política: Gemini = tareas livianas | OpenAI = tareas pesadas
 // Node HTTP nativo. Sin Express. Sin dependencias externas.
 
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
 const { classifyRequest } = require("./request_classifier.cjs");
+const { createDb, hasSensitiveData } = require("./db.cjs");
 
 const PORT = process.env.PORT || 3001;
 const PROJECT_ROOT = path.resolve(__dirname, "../../");
@@ -145,7 +147,9 @@ const OPENAI_KEY = process.env.OPENAI_API_KEY || "";
 const GEMINI_KEY = process.env.GEMINI_API_KEY || "";
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || "";
 const GROQ_KEY = process.env.GROQ_API_KEY || "";
+const FISH_API_KEY = process.env.FISH_API_KEY || "";
 const IS_VERCEL = Boolean(process.env.VERCEL);
+const DB = createDb();
 
 // System prompt ULTRON
 const ULTRON_SYSTEM = `You are ULTRON — a powerful, strategic and slightly theatrical AI operator.
@@ -198,7 +202,7 @@ async function callGemini(message, meta = {}) {
   const limit = checkLimits({ estimatedCost: estimateRequestCost("gemini"), estimatedTokens });
   if (limit.blocked) return { ok: false, status: "LIMIT_REACHED", message: limit.reason };
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -211,8 +215,8 @@ async function callGemini(message, meta = {}) {
     const data = await res.json();
     if (!res.ok) return { ok: false, status: "GEMINI_ERROR", message: data.error?.message || "Gemini error." };
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response.";
-    logConsumption({ provider: "gemini", model: "gemini-flash", tokens_used: estimatedTokens, cost_estimated: estimateRequestCost("gemini"), call_type: "chat", approved_by: "chief_ui", ...meta });
-    return { ok: true, provider: "gemini", model: "gemini-flash", message: text, cost_estimated: estimateRequestCost("gemini"), warning: limit.warnings?.[0] };
+    logConsumption({ provider: "gemini", model: "gemini-2.0-flash", tokens_used: estimatedTokens, cost_estimated: estimateRequestCost("gemini"), call_type: "chat", approved_by: "chief_ui", ...meta });
+    return { ok: true, provider: "gemini", model: "gemini-2.0-flash", message: text, cost_estimated: estimateRequestCost("gemini"), warning: limit.warnings?.[0] };
   } catch (e) {
     return { ok: false, status: "GEMINI_ERROR", message: e.message };
   }
@@ -246,10 +250,11 @@ async function callClaude(message, meta = {}) {
 
 function localRulesResponse(message) {
   const m = message.toLowerCase();
-  if (m.includes("status") || m.includes("estado")) return "ULTRON v1.8 — SUPERVISED AUTONOMY. All systems nominal. Human approval required for execution.";
-  if (m.includes("health") || m.includes("salud")) return "Backend online. Voice layer active. AI router ready.";
-  if (m.includes("version")) return "ULTRON v1.8 — Voice + PWA + AI Router Foundation.";
-  if (m.includes("help") || m.includes("ayuda")) return "Available: /model openai · /model gemini · /model claude · /model local · /clear · Ask me anything.";
+  if (m.includes("status") || m.includes("estado")) return "ULTRON v2.8 — Fish Audio TTS optional, SQLite memory active, task tracking online. Human approval required.";
+  if (m.includes("health") || m.includes("salud")) return "Backend online. AI Router active. Voice fallback and SQLite guardrails nominal.";
+  if (m.includes("version")) return "ULTRON v2.8 — Fish Audio TTS + SQLite Memory + Task Tracking.";
+  if (m.includes("help") || m.includes("ayuda")) return "Comandos: /model openai · /model gemini · /model claude · /model local · /model auto · /clear · /status · Escribe cualquier tarea.";
+  if (m.includes("router") || m.includes("proveedor") || m.includes("provider")) return "Router: L0=local | L1=ollama(dev) | L2=gemini-flash(light) | L3=openai-gpt4o(heavy). Auto-routing activo.";
   return null;
 }
 
@@ -339,7 +344,11 @@ function localRouterResult(message, classification) {
 async function routeToAI(message, requestedModel, options = {}) {
   const shouldAuto = !requestedModel || requestedModel === "auto";
   const initial = shouldAuto
-    ? classifyRequest(message, { policy: ROUTER_POLICY, sensitive: Boolean(options.sensitive) })
+    ? classifyRequest(message, {
+        policy: ROUTER_POLICY,
+        sensitive: Boolean(options.sensitive),
+        forceProvider: options.forceProvider || null
+      })
     : explicitClassification(requestedModel);
   const classification = chooseFallback(initial);
 
@@ -387,6 +396,76 @@ async function routeToAI(message, requestedModel, options = {}) {
     classification_reason: classification.reason,
     cost_estimated: result.cost_estimated ?? estimatedCost,
     warning: result.warning || guard.warnings?.[0]
+  };
+}
+
+async function trackedRouteToAI(message, requestedModel, options = {}) {
+  const started = Date.now();
+  const taskType = options.taskType || "chat";
+  const result = await routeToAI(message, requestedModel, options);
+  try {
+    DB.logTask({
+      task_type: taskType,
+      prompt: message,
+      success: Boolean(result.ok),
+      provider: result.provider || requestedModel || "unknown",
+      duration_ms: Date.now() - started
+    });
+  } catch { /* tracking is best effort and never blocks a response */ }
+  return result;
+}
+
+async function fishAudioTts(text, level) {
+  const cleanText = String(text || "").trim().slice(0, 500);
+  if (!cleanText) return { ok: false, reason: "text required." };
+  if (hasSensitiveData(cleanText)) return { ok: false, blocked: true, reason: "Sensitive data rejected." };
+  if (level === 1 || !FISH_API_KEY) {
+    return { ok: true, engine: "web_speech", text: cleanText, level: 1 };
+  }
+
+  const estimatedCost = Math.round((cleanText.length / 1000) * 0.001 * 100000) / 100000;
+  const res = await fetch("https://api.fish.audio/v1/tts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${FISH_API_KEY}`
+    },
+    body: JSON.stringify({
+      text: cleanText,
+      model: "speech-1",
+      format: "mp3"
+    })
+  });
+
+  const contentType = res.headers.get("content-type") || "audio/mpeg";
+  if (!res.ok) {
+    let message = "Fish Audio TTS error.";
+    try {
+      const data = await res.json();
+      message = data.error?.message || data.message || message;
+    } catch { /* binary or empty error */ }
+    return { ok: false, status: "FISH_AUDIO_ERROR", message };
+  }
+
+  const audioBuffer = Buffer.from(await res.arrayBuffer());
+  logConsumption({
+    provider: "fish_audio",
+    model: "speech-1",
+    tokens_used: cleanText.length,
+    cost_estimated: estimatedCost,
+    call_type: "tts",
+    approved_by: "chief_ui",
+    level
+  });
+  return {
+    ok: true,
+    engine: "fish_audio",
+    model: "speech-1",
+    level,
+    audio_base64: audioBuffer.toString("base64"),
+    content_type: contentType,
+    chars: cleanText.length,
+    cost_estimated: estimatedCost
   };
 }
 
@@ -452,13 +531,22 @@ async function router(req, res) {
       (AI_PROVIDER === "gemini" && !!GEMINI_KEY) ||
       (AI_PROVIDER === "claude" && !!ANTHROPIC_KEY);
     send(res, 200, {
-      ok: true, service: "ultron-backend", version: "v1.8",
+      ok: true, service: "ultron-backend", version: "v2.8", sprint: "v2.8",
       mode: "SUPERVISED_AUTONOMY",
+      status: "ULTRON_AI_ROUTER_FOUNDATION_READY",
       aiProvider: AI_PROVIDER || "none",
       aiProxy: providerReady ? "READY_WITH_KEY" : "WAITING_FOR_KEY",
-      aiRouter: { provider: AI_PROVIDER || "none", ready: providerReady },
-      router: {
-        levels: ["local_rules", "ollama_local_stub", "gemini_flash", "openai_gpt_4o_mini"],
+      aiRouter: {
+        version: "v2.8",
+        provider: AI_PROVIDER || "none",
+        ready: providerReady,
+        doctrine: {
+          L0: "local_rules — sin API, respuesta inmediata",
+          L1: "ollama — local/dev ÚNICAMENTE, bloqueado en Vercel",
+          L2: "gemini-2.0-flash — tareas livianas (resúmenes, traducciones, listas)",
+          L3: "openai-gpt4o-mini — tareas pesadas (análisis, código, arquitectura)"
+        },
+        levels: ["local_rules", "ollama_local_dev", "gemini_2.0_flash", "openai_gpt4o_mini"],
         limits: loadConsumptionLog().limits,
         consumption: loadConsumptionLog().summary
       },
@@ -466,9 +554,91 @@ async function router(req, res) {
       openaiProxy: OPENAI_KEY ? "READY_WITH_KEY" : "WAITING_FOR_KEY",
       groqProxy: GROQ_KEY ? "READY_WITH_KEY" : "WAITING_FOR_KEY",
       geminiProxy: GEMINI_KEY ? "READY_WITH_KEY" : "WAITING_FOR_KEY",
+      fishAudioProxy: FISH_API_KEY ? "READY_WITH_KEY" : "WEB_SPEECH_FALLBACK",
+      sqlite: { mode: DB.mode, memory: "runtime/ultron.db" },
       execution: "dry_run_only", external_network: false, secrets_access: false,
       timestamp: new Date().toISOString()
     }, origin);
+    return;
+  }
+
+  // POST /api/tts
+  if (method === "POST" && url === "/api/tts") {
+    if (!requireToken(req, res, origin)) return;
+    const body = await parseBody(req);
+    const text = String(body.text || "").trim();
+    const level = Number(body.level) === 2 || Number(body.level) === 3 ? Number(body.level) : 1;
+    if (!text) { send(res, 400, { ok: false, reason: "text required." }, origin); return; }
+    if (text.length > 500) { send(res, 400, { ok: false, reason: "max 500 chars per request." }, origin); return; }
+    try {
+      const result = await fishAudioTts(text, level);
+      send(res, result.ok ? 200 : result.blocked ? 403 : 503, result, origin);
+    } catch (err) {
+      send(res, 503, { ok: false, status: "TTS_ERROR", message: err.message }, origin);
+    }
+    return;
+  }
+
+  // GET /api/db/memories
+  if (method === "GET" && url === "/api/db/memories") {
+    if (!requireToken(req, res, origin)) return;
+    try {
+      send(res, 200, { ok: true, mode: DB.mode, memories: DB.listMemories() }, origin);
+    } catch (err) {
+      send(res, 500, { ok: false, reason: err.message }, origin);
+    }
+    return;
+  }
+
+  // POST /api/db/memory
+  if (method === "POST" && url === "/api/db/memory") {
+    if (!requireToken(req, res, origin)) return;
+    const body = await parseBody(req);
+    if (!body.content || !String(body.content).trim()) {
+      send(res, 400, { ok: false, reason: "content required." }, origin);
+      return;
+    }
+    try {
+      const memory = DB.addMemory(body);
+      send(res, 200, { ok: true, mode: DB.mode, memory }, origin);
+    } catch (err) {
+      send(res, 403, { ok: false, reason: err.message }, origin);
+    }
+    return;
+  }
+
+  // GET /api/db/patterns
+  if (method === "GET" && url === "/api/db/patterns") {
+    if (!requireToken(req, res, origin)) return;
+    try {
+      send(res, 200, { ok: true, mode: DB.mode, patterns: DB.listPatterns() }, origin);
+    } catch (err) {
+      send(res, 500, { ok: false, reason: err.message }, origin);
+    }
+    return;
+  }
+
+  // POST /api/db/task-log
+  if (method === "POST" && url === "/api/db/task-log") {
+    if (!requireToken(req, res, origin)) return;
+    const body = await parseBody(req);
+    try {
+      const task = DB.logTask(body);
+      send(res, 200, { ok: true, mode: DB.mode, task }, origin);
+    } catch (err) {
+      send(res, 403, { ok: false, reason: err.message }, origin);
+    }
+    return;
+  }
+
+  // GET /api/db/stats
+  if (method === "GET" && url === "/api/db/stats") {
+    if (!requireToken(req, res, origin)) return;
+    try {
+      send(res, 200, { ok: true, mode: DB.mode, ...DB.stats() }, origin);
+    } catch (err) {
+      send(res, 500, { ok: false, reason: err.message }, origin);
+    }
     return;
   }
 
@@ -478,19 +648,28 @@ async function router(req, res) {
     const body = await parseBody(req);
     const message = (body.message || "").trim();
     const model = (body.model || body.provider || "").toLowerCase();
+    const forceProvider = body.forceProvider || null;
     if (!message) { send(res, 400, { ok: false, reason: "message required." }, origin); return; }
 
     // Comandos especiales
     if (message.startsWith("/clear")) { send(res, 200, { ok: true, provider: "system", message: "Chat cleared.", action: "clear" }, origin); return; }
-    if (message.startsWith("/status")) { send(res, 200, { ok: true, provider: "system", message: `ULTRON v1.8 — Provider: ${AI_PROVIDER || "none"} — Mode: SUPERVISED_AUTONOMY` }, origin); return; }
+    if (message.startsWith("/status")) { send(res, 200, { ok: true, provider: "system", message: `ULTRON v2.8 — Fish:${FISH_API_KEY?"READY":"WEB_SPEECH"} SQLite:${DB.mode} Tracking:ON — Gemini:${GEMINI_KEY?"READY":"NO_KEY"} OpenAI:${OPENAI_KEY?"READY":"NO_KEY"}` }, origin); return; }
+    if (message.startsWith("/router")) {
+      send(res, 200, { ok: true, provider: "system", message: `Router v2.8: L1=web_speech(always) L2=fish_audio(${FISH_API_KEY?"READY":"NO_KEY"}) AI=${ROUTER_POLICY.fallback_chain?.join("→")}` }, origin);
+      return;
+    }
     if (message.startsWith("/consumption")) {
       const log = loadConsumptionLog();
-      send(res, 200, { ok: true, provider: "system", message: `Calls today: ${log.summary.calls_today || 0} / ${log.limits.max_calls_per_day} — Cost today: $${(log.summary.estimated_cost_usd || 0).toFixed(4)}` }, origin);
+      send(res, 200, { ok: true, provider: "system", message: `Calls today: ${log.summary.calls_today || 0} / ${log.limits.max_calls_per_day} — Cost today: $${(log.summary.estimated_cost_usd || 0).toFixed(4)} — Monthly: $${(log.summary.estimated_cost_usd || 0).toFixed(4)}` }, origin);
       return;
     }
 
-    const result = await routeToAI(message, model || null, { sensitive: Boolean(body.sensitive) });
-    addLog("chat", { provider: result.provider, model: result.model, input: message.slice(0, 100) });
+    const result = await trackedRouteToAI(message, model || null, {
+      sensitive: Boolean(body.sensitive),
+      forceProvider: forceProvider,
+      taskType: "chat"
+    });
+    addLog("chat", { provider: result.provider, model: result.model, level: result.level, input: message.slice(0, 100) });
     send(res, result.ok ? 200 : 503, result, origin);
     return;
   }
@@ -673,7 +852,7 @@ Respond in the same language as the meeting notes. Be concise and actionable. Us
     let provider = "local";
 
     try {
-      const aiResult = await routeToAI(meetingPrompt, null);
+      const aiResult = await trackedRouteToAI(meetingPrompt, null, { taskType: "meeting" });
       if (aiResult.ok) {
         result = aiResult.message;
         provider = aiResult.provider;
@@ -768,6 +947,15 @@ Respond in the same language as the meeting notes. Be concise and actionable. Us
             provider = "openai_vision";
             const tokens = data.usage?.total_tokens || 0;
             logConsumption({ provider: "openai", model: "gpt-4o-mini", tokens_used: tokens, cost_estimated: Math.round((tokens / 1000000) * 150 * 10000) / 10000, call_type: "vision" });
+            try {
+              DB.logTask({
+                task_type: "photo",
+                prompt: filename,
+                success: true,
+                provider: "openai",
+                duration_ms: 0
+              });
+            } catch { /* best effort */ }
           }
         }
       } catch { /* fall through to local */ }
@@ -915,7 +1103,7 @@ Input: "${content.slice(0, 800)}"
 
 Return only the distilled knowledge:`;
 
-      const aiResult = await routeToAI(prompt, null);
+      const aiResult = await trackedRouteToAI(prompt, null, { taskType: "distill" });
       if (aiResult.ok && aiResult.provider !== "local_rules") {
         distilled = aiResult.message.trim();
         provider = aiResult.provider;
@@ -1139,7 +1327,7 @@ Execute in supervised mode. Provide a brief execution report (2-4 sentences).
 Do not claim access to shell, credentials, or external systems.
 Respond in the same language as the task description.`;
 
-      const aiResult = await routeToAI(prompt, null);
+      const aiResult = await trackedRouteToAI(prompt, null, { taskType: "agent" });
       if (aiResult.ok) { result = aiResult.message; provider = aiResult.provider; }
       else { result = `[DRY_RUN] Action '${agent.action}' validated and simulated for: "${agent.task}". No real execution performed.`; }
     } catch {
@@ -1375,9 +1563,9 @@ http.createServer(router).listen(PORT, () => {
    ██║   ███████╗██║   ██║  ██║╚██████╔╝██║ ╚████║
    ╚═╝   ╚══════╝╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
 
-ULTRON v1.8 — Voice + PWA + AI Router Foundation
+ULTRON v2.8 — Fish Audio TTS + SQLite Memory + Task Tracking
 Mode: SUPERVISED_AUTONOMY | Port: ${PORT}
 AI Router: Level 0 (local) → 1 (Ollama) → 2 (Gemini) → 3 (OpenAI)
-Provider: ${AI_PROVIDER || "none"} | OpenAI: ${OPENAI_KEY ? "KEY_PRESENT" : "NO_KEY"} | Gemini: ${GEMINI_KEY ? "KEY_PRESENT" : "NO_KEY"} | Claude: ${ANTHROPIC_KEY ? "KEY_PRESENT" : "NO_KEY"}
+Provider: ${AI_PROVIDER || "none"} | OpenAI: ${OPENAI_KEY ? "KEY_PRESENT" : "NO_KEY"} | Gemini: ${GEMINI_KEY ? "KEY_PRESENT" : "NO_KEY"} | Claude: ${ANTHROPIC_KEY ? "KEY_PRESENT" : "NO_KEY"} | Fish: ${FISH_API_KEY ? "KEY_PRESENT" : "WEB_SPEECH_FALLBACK"} | DB: ${DB.mode}
   `);
 });

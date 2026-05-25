@@ -232,11 +232,13 @@ function Row({ label, value, valueColor }) {
 // ── Chat Panel — HUD style ────────────────────────────────
 function ChatPanel({ backendOnline, activeModel, setActiveModel, onAction }) {
   const [messages, setMessages] = useState([
-    { role: "system", text: "ULTRON v2.7 — AETHERNOVA FULL OPERATOR STACK ONLINE.", ts: new Date().toLocaleTimeString() }
+    { role: "system", text: "ULTRON v2.8 — FISH TTS + SQLITE MEMORY + TASK TRACKING ONLINE.", ts: new Date().toLocaleTimeString() }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
+  const [voiceLevel, setVoiceLevel] = useState(1);
+  const [speakingId, setSpeakingId] = useState(null);
   const bottomRef = useRef(null);
   const recRef = useRef(null);
 
@@ -283,6 +285,43 @@ function ChatPanel({ backendOnline, activeModel, setActiveModel, onAction }) {
     setLoading(false);
   }
 
+  function webSpeech(text) {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.pitch = 0.35;
+    utt.rate = 0.86;
+    utt.lang = "es-MX";
+    window.speechSynthesis.speak(utt);
+  }
+
+  async function speakMessage(text, id) {
+    const clean = String(text || "").slice(0, 500);
+    if (!clean) return;
+    setSpeakingId(id);
+    try {
+      if (!backendOnline || voiceLevel === 1) {
+        webSpeech(clean);
+        return;
+      }
+      const res = await authFetch("/api/tts", {
+        method: "POST",
+        body: JSON.stringify({ text: clean, level: voiceLevel })
+      });
+      const data = await res.json();
+      if (data.engine === "fish_audio" && data.audio_base64) {
+        const audio = new Audio(`data:${data.content_type || "audio/mpeg"};base64,${data.audio_base64}`);
+        audio.play();
+      } else {
+        webSpeech(data.text || clean);
+      }
+    } catch {
+      webSpeech(clean);
+    } finally {
+      setTimeout(() => setSpeakingId(null), 600);
+    }
+  }
+
   function toggleVoice() {
     if (!recRef.current) return;
     if (listening) { recRef.current.stop(); setListening(false); }
@@ -294,7 +333,7 @@ function ChatPanel({ backendOnline, activeModel, setActiveModel, onAction }) {
   return (
     <Card eyebrow="01 / OPERATOR CHAT" glow={loading || listening}>
       {/* Model selector */}
-      <div style={{ display: "flex", gap: 3, marginBottom: 8, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 3, marginBottom: 8, flexWrap: "wrap", alignItems: "center" }}>
         {models.map(m => <button key={m} onClick={() => setActiveModel(m)} style={{
           background: activeModel === m ? C.redGlow : "transparent",
           border: `0.5px solid ${activeModel === m ? C.red : C.border}`,
@@ -302,6 +341,14 @@ function ChatPanel({ backendOnline, activeModel, setActiveModel, onAction }) {
           color: activeModel === m ? C.red : "#333",
           fontSize: 8, fontFamily: C.fontMono, letterSpacing: "0.08em"
         }}>{m.toUpperCase()}</button>)}
+        <span style={{ marginLeft: 4, fontSize: 8, color: "#333", fontFamily: C.fontMono }}>VOICE</span>
+        {[1, 2].map(level => <button key={level} onClick={() => setVoiceLevel(level)} style={{
+          background: voiceLevel === level ? C.redGlow : "transparent",
+          border: `0.5px solid ${voiceLevel === level ? C.red : C.border}`,
+          borderRadius: 2, padding: "2px 7px", cursor: "pointer",
+          color: voiceLevel === level ? C.red : "#333",
+          fontSize: 8, fontFamily: C.fontMono, letterSpacing: "0.08em"
+        }}>L{level}</button>)}
       </div>
 
       {/* Messages */}
@@ -315,6 +362,7 @@ function ChatPanel({ backendOnline, activeModel, setActiveModel, onAction }) {
           </div>
           <div style={{ fontSize: 11, color: m.role === "user" ? C.text : m.role === "action" ? C.amber : m.role === "system" ? "#333" : "#999", lineHeight: 1.6 }}>
             {m.text}
+            {m.role === "ultron" && <button onClick={() => speakMessage(m.text, i)} title={`Speak with voice L${voiceLevel}`} style={{ marginLeft: 8, fontSize: 9, color: speakingId === i ? C.red : C.textDim, background: "transparent", border: `0.5px solid ${speakingId === i ? C.red : C.border2}`, borderRadius: 2, padding: "1px 6px", cursor: "pointer", fontFamily: C.fontMono }}>🔊 L{voiceLevel}</button>}
             {m.tab && <button onClick={() => onAction(m.tab)} style={{ marginLeft: 8, fontSize: 8, color: C.amber, background: "transparent", border: `0.5px solid ${C.amber}`, borderRadius: 2, padding: "1px 5px", cursor: "pointer", fontFamily: C.fontMono }}>→ GO</button>}
           </div>
         </div>)}
@@ -342,7 +390,7 @@ function ChatPanel({ backendOnline, activeModel, setActiveModel, onAction }) {
         <Btn onClick={send} variant="primary" style={{ minWidth: 48, fontSize: 14 }}>▶</Btn>
       </div>
       <div style={{ marginTop: 4, fontSize: 8, color: "#1e1e1e", fontFamily: C.fontMono }}>
-        ACTION TAGS: meeting · distill · agents · workspace · ecosystem · costs · photo
+        ACTION TAGS: meeting · distill · agents · workspace · ecosystem · costs · photo · VOICE L{voiceLevel}
       </div>
     </Card>
   );
@@ -550,7 +598,7 @@ export default function UltronMobile() {
             <div style={{ fontSize: 16, fontWeight: 700, color: C.red, letterSpacing: "0.18em", fontFamily: C.fontUI, lineHeight: 1, textShadow: `0 0 12px ${C.redGlow}` }}>ULTRON</div>
             <div style={{ fontSize: 7, color: "#222", fontFamily: C.fontMono, letterSpacing: "0.1em" }}>KNOWLEDGE OPERATOR</div>
           </div>
-          <Badge color="gray">v2.7</Badge>
+          <Badge color="gray">v2.8</Badge>
           {providerLabel && <Badge color="red">{providerLabel}</Badge>}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -616,8 +664,8 @@ export default function UltronMobile() {
 
         {/* Footer */}
         <div style={{ marginTop: 10, padding: "10px 12px", background: C.bg1, border: `0.5px solid ${C.border}`, borderRadius: 3, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
-          <span style={{ fontSize: 8, color: C.redDim, fontFamily: C.fontMono, letterSpacing: "0.1em" }}>ULTRON v2.7 — AETHERNOVA FULL OPERATOR STACK</span>
-          <span style={{ fontSize: 8, color: "#1e1e1e", fontFamily: C.fontMono }}>NEXT → FINAL: KEYS + CONSUMPTION</span>
+          <span style={{ fontSize: 8, color: C.redDim, fontFamily: C.fontMono, letterSpacing: "0.1em" }}>ULTRON v2.8 — FISH TTS + SQLITE MEMORY + TASK TRACKING</span>
+          <span style={{ fontSize: 8, color: "#1e1e1e", fontFamily: C.fontMono }}>VOICE → L1 WEB SPEECH / L2 FISH AUDIO</span>
         </div>
       </main>
     </div>

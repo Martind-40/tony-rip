@@ -25,6 +25,16 @@ const BT_GLASSES = [
   { brand: "Any BT Headset", price: "$20+", mic: "✓", audio: "✓", note: "Use phone browser + headset." }
 ];
 
+const BACKEND_URL = "http://localhost:3001";
+const TOKEN = "ULTRON_LOCAL_OPERATOR_TOKEN";
+
+function authFetch(path, options = {}) {
+  return fetch(`${BACKEND_URL}${path}`, {
+    ...options,
+    headers: { "Content-Type": "application/json", "x-ultron-token": TOKEN, ...(options.headers || {}) }
+  });
+}
+
 export default function VoiceCompanion({ onCommand, backendOnline }) {
   const [status, setStatus] = useState("idle");
   const [transcript, setTranscript] = useState("");
@@ -33,6 +43,8 @@ export default function VoiceCompanion({ onCommand, backendOnline }) {
   const [supported, setSupported] = useState(true);
   const [showSetup, setShowSetup] = useState(false);
   const [continuous, setContinuous] = useState(false);
+  const [voiceLevel, setVoiceLevel] = useState(1);
+  const [voiceEngine, setVoiceEngine] = useState("web_speech");
   const recRef = useRef(null);
 
   useEffect(() => {
@@ -67,11 +79,37 @@ export default function VoiceCompanion({ onCommand, backendOnline }) {
     setHistory(prev => [{ id: Date.now(), command: "unknown", text, timestamp: new Date().toLocaleTimeString() }, ...prev].slice(0, 10));
   }
 
-  function speak(text) {
-    if (!window.speechSynthesis) return;
+  function webSpeech(text) {
+    if (!window.speechSynthesis) return false;
     const utt = new SpeechSynthesisUtterance(text);
     utt.pitch = 0.3; utt.rate = 0.85; utt.lang = "es-MX";
     window.speechSynthesis.speak(utt);
+    setVoiceEngine("web_speech");
+    return true;
+  }
+
+  async function speak(text) {
+    const clean = String(text || "").slice(0, 500);
+    if (!backendOnline || voiceLevel === 1) {
+      webSpeech(clean);
+      return;
+    }
+    try {
+      const res = await authFetch("/api/tts", {
+        method: "POST",
+        body: JSON.stringify({ text: clean, level: voiceLevel })
+      });
+      const data = await res.json();
+      if (data.engine === "fish_audio" && data.audio_base64) {
+        setVoiceEngine("fish_audio");
+        const audio = new Audio(`data:${data.content_type || "audio/mpeg"};base64,${data.audio_base64}`);
+        audio.play();
+      } else {
+        webSpeech(data.text || clean);
+      }
+    } catch {
+      webSpeech(clean);
+    }
   }
 
   function startListening() {
@@ -91,7 +129,7 @@ export default function VoiceCompanion({ onCommand, backendOnline }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
         <div style={{ fontSize: 12, color: C.red, fontWeight: 600, fontFamily: C.fontMono }}>VOICE COMPANION MODE</div>
         <span style={{ fontSize: 9, color: status === "listening" ? C.red : "#444", fontFamily: C.fontMono, background: C.bg2, padding: "2px 7px", borderRadius: 3 }}>
-          {status === "listening" ? "● ACTIVE" : "○ STANDBY"}
+          {status === "listening" ? "● ACTIVE" : `○ L${voiceLevel} ${voiceEngine.toUpperCase()}`}
         </span>
       </div>
 
@@ -113,6 +151,23 @@ export default function VoiceCompanion({ onCommand, backendOnline }) {
             <button onClick={() => { setContinuous(!continuous); }} style={{ background: continuous ? C.redGlow : "transparent", border: `0.5px solid ${continuous ? C.red : C.border2}`, borderRadius: 4, color: continuous ? C.red : C.textDim, fontFamily: C.fontMono, fontSize: 9, padding: "10px 8px", cursor: "pointer", minHeight: 44 }}>
               {continuous ? "CONT ON" : "CONT OFF"}
             </button>
+          </div>
+
+          <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 10 }}>
+            <span style={{ fontSize: 9, color: "#444", fontFamily: C.fontMono }}>VOICE LEVEL</span>
+            {[1, 2].map(level => (
+              <button key={level} onClick={() => setVoiceLevel(level)} style={{
+                background: voiceLevel === level ? C.redGlow : "transparent",
+                border: `0.5px solid ${voiceLevel === level ? C.red : C.border2}`,
+                borderRadius: 3,
+                color: voiceLevel === level ? C.red : C.textDim,
+                fontFamily: C.fontMono,
+                fontSize: 9,
+                padding: "6px 10px",
+                cursor: "pointer"
+              }}>L{level}</button>
+            ))}
+            <button onClick={() => speak("ULTRON voice channel online.")} style={{ marginLeft: "auto", background: "transparent", border: `0.5px solid ${C.border2}`, borderRadius: 3, color: C.textDim, fontFamily: C.fontMono, fontSize: 9, padding: "6px 10px", cursor: "pointer" }}>🔊 TEST</button>
           </div>
 
           {/* Transcript */}

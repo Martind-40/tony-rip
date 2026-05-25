@@ -1,7 +1,7 @@
 {
   "project": "ULTRON",
-  "version": "v1.2",
-  "mode": "MOBILE_BACKEND_FOUNDATION",
+  "version": "v2.8",
+  "mode": "FISH_TTS_SQLITE_TASK_TRACKING",
   "backend": {
     "type": "node_http_native",
     "port": 3001,
@@ -9,8 +9,9 @@
   },
   "ai": {
     "claude_api": "BLOCKED_UNTIL_V1_3",
-    "elevenlabs": "BLOCKED_UNTIL_V1_3",
-    "web_speech_api": "ENABLED_FRONTEND_ONLY"
+    "elevenlabs": "FUTURE_L3",
+    "fish_audio": "ENABLED_IF_FISH_API_KEY_PRESENT",
+    "web_speech_api": "ENABLED_DEFAULT_L1"
   },
   "execution": {
     "mode": "DRY_RUN_ONLY",
@@ -26,11 +27,18 @@
     "autonomous_execution": false
   },
   "memory": {
+    "sqlite": "runtime/ultron.db",
+    "sqlite_scope": "non_sensitive_approved_knowledge_only",
     "whitelist": [
       "operator_command_log.md",
       "v1_1_real_operator_testing_snapshot.json",
       "runtime_config.json"
     ]
   },
-  "status": "ULTRON_V1_2_MOBILE_BACKEND_FOUNDATION_READY"
+  "task_tracking": {
+    "enabled": true,
+    "task_types": ["chat", "meeting", "distill", "agent", "photo", "ecosystem"],
+    "stores": ["task_log", "usage_patterns"]
+  },
+  "status": "ULTRON_V2_8_FISH_TTS_SQLITE_TASK_TRACKING_READY"
 }
