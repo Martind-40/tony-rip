@@ -5,11 +5,13 @@
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
+const { classifyRequest } = require("./request_classifier.cjs");
 
 const PORT = process.env.PORT || 3001;
 const PROJECT_ROOT = path.resolve(__dirname, "../../");
 const CONFIG_PATH = path.join(PROJECT_ROOT, "runtime", "runtime_config.json");
 const CONSUMPTION_LOG_PATH = path.join(PROJECT_ROOT, "runtime", "consumption_log.json");
+const ROUTER_POLICY_PATH = path.join(__dirname, "router_policy.json");
 const MEMORY_ROOT = path.join(PROJECT_ROOT, "memory");
 
 // ── Env local ────────────────────────────────────────────
@@ -30,7 +32,12 @@ function loadConfig() {
   try { return JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8")); }
   catch { return { backend: { token: "ULTRON_LOCAL_OPERATOR_TOKEN" } }; }
 }
+function loadRouterPolicy() {
+  try { return JSON.parse(fs.readFileSync(ROUTER_POLICY_PATH, "utf8")); }
+  catch { return { fallback_chain: ["openai", "gemini", "ollama", "local"], classification_rules: {} }; }
+}
 const CONFIG = loadConfig();
+const ROUTER_POLICY = loadRouterPolicy();
 const TOKEN = process.env.ULTRON_TOKEN || CONFIG.backend?.token || "ULTRON_LOCAL_OPERATOR_TOKEN";
 
 // ── Consumption log ──────────────────────────────────────
@@ -76,19 +83,35 @@ function logConsumption(entry) {
   saveConsumptionLog(data);
 }
 
-function checkLimits() {
+function checkLimits({ estimatedCost = 0, estimatedTokens = 0 } = {}) {
   const data = loadConsumptionLog();
   const today = new Date().toISOString().split("T")[0];
   const todayCalls = data.log.filter(e => e.timestamp?.startsWith(today)).length;
+  const month = today.slice(0, 7);
+  const monthCost = data.log
+    .filter(e => e.timestamp?.startsWith(month))
+    .reduce((s, e) => s + (e.cost_estimated || 0), 0);
   const limits = data.limits || {};
   if (todayCalls >= (limits.max_calls_per_day || 50)) return { blocked: true, reason: "Daily call limit reached." };
   const todayCost = data.log.filter(e => e.timestamp?.startsWith(today)).reduce((s, e) => s + (e.cost_estimated || 0), 0);
-  if (todayCost >= (limits.max_daily_cost_usd || 1.00)) return { blocked: true, reason: "Daily cost limit reached." };
-  return { blocked: false };
+  if (estimatedTokens > (limits.max_tokens_per_request || 2000)) return { blocked: true, reason: "Max tokens per request exceeded." };
+  if (todayCost + estimatedCost > (limits.max_daily_cost_usd || 1.00)) return { blocked: true, reason: "Daily cost limit reached." };
+  if (monthCost + estimatedCost > (limits.max_monthly_budget_usd || 20.00)) return { blocked: true, reason: "Monthly budget limit reached." };
+  const warnings = [];
+  if (todayCost + estimatedCost >= (limits.max_daily_cost_usd || 1.00) * 0.8) warnings.push("Daily cost is at or above 80%.");
+  if (monthCost + estimatedCost >= (limits.max_monthly_budget_usd || 20.00) * 0.8) warnings.push("Monthly budget is at or above 80%.");
+  return { blocked: false, warnings };
 }
 
 function estimateTokens(text) {
   return Math.max(1, Math.ceil(String(text || "").length / 4));
+}
+
+function estimateRequestCost(provider) {
+  if (provider === "gemini") return 0.00001;
+  if (provider === "openai") return 0.0001;
+  if (provider === "claude") return 0.0001;
+  return 0;
 }
 
 // ── Allowlist & security ──────────────────────────────────
@@ -112,11 +135,11 @@ Keep responses concise and impactful. Max 3 sentences unless asked for more.
 Respond always in the same language the user writes in.
 Do not claim access to files, shell, secrets, private memory, email, calendar, or external systems.`;
 
-async function callOpenAI(message) {
+async function callOpenAI(message, meta = {}) {
   if (!OPENAI_KEY) return { ok: false, status: "OPENAI_PROVIDER_NOT_CONFIGURED", message: "OpenAI API key not configured." };
-  const limit = checkLimits();
+  const estimatedTokens = estimateTokens(message);
+  const limit = checkLimits({ estimatedCost: estimateRequestCost("openai"), estimatedTokens });
   if (limit.blocked) return { ok: false, status: "LIMIT_REACHED", message: limit.reason };
-  if (estimateTokens(message) > 2000) return { ok: false, status: "LIMIT_REACHED", message: "Max tokens per request exceeded." };
   try {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -131,18 +154,18 @@ async function callOpenAI(message) {
     if (!res.ok) return { ok: false, status: "OPENAI_ERROR", message: data.error?.message || "OpenAI error." };
     const tokens = data.usage?.total_tokens || 0;
     const cost = Math.round((tokens / 1000000) * 150 * 10000) / 10000;
-    logConsumption({ provider: "openai", model: "gpt-4o-mini", tokens_used: tokens, cost_estimated: cost, call_type: "chat", approved_by: "chief_ui" });
-    return { ok: true, provider: "openai", model: "gpt-4o-mini", message: data.choices[0].message.content };
+    logConsumption({ provider: "openai", model: "gpt-4o-mini", tokens_used: tokens, cost_estimated: cost, call_type: "chat", approved_by: "chief_ui", ...meta });
+    return { ok: true, provider: "openai", model: "gpt-4o-mini", message: data.choices[0].message.content, cost_estimated: cost, warning: limit.warnings?.[0] };
   } catch (e) {
     return { ok: false, status: "OPENAI_ERROR", message: e.message };
   }
 }
 
-async function callGemini(message) {
+async function callGemini(message, meta = {}) {
   if (!GEMINI_KEY) return { ok: false, status: "GEMINI_PROVIDER_NOT_CONFIGURED", message: "Gemini API key not configured." };
-  const limit = checkLimits();
+  const estimatedTokens = estimateTokens(message);
+  const limit = checkLimits({ estimatedCost: estimateRequestCost("gemini"), estimatedTokens });
   if (limit.blocked) return { ok: false, status: "LIMIT_REACHED", message: limit.reason };
-  if (estimateTokens(message) > 2000) return { ok: false, status: "LIMIT_REACHED", message: "Max tokens per request exceeded." };
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
     const res = await fetch(url, {
@@ -157,18 +180,18 @@ async function callGemini(message) {
     const data = await res.json();
     if (!res.ok) return { ok: false, status: "GEMINI_ERROR", message: data.error?.message || "Gemini error." };
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response.";
-    logConsumption({ provider: "gemini", model: "gemini-flash", tokens_used: 0, cost_estimated: 0, call_type: "chat", approved_by: "chief_ui" });
-    return { ok: true, provider: "gemini", model: "gemini-flash", message: text };
+    logConsumption({ provider: "gemini", model: "gemini-flash", tokens_used: estimatedTokens, cost_estimated: estimateRequestCost("gemini"), call_type: "chat", approved_by: "chief_ui", ...meta });
+    return { ok: true, provider: "gemini", model: "gemini-flash", message: text, cost_estimated: estimateRequestCost("gemini"), warning: limit.warnings?.[0] };
   } catch (e) {
     return { ok: false, status: "GEMINI_ERROR", message: e.message };
   }
 }
 
-async function callClaude(message) {
+async function callClaude(message, meta = {}) {
   if (!ANTHROPIC_KEY) return { ok: false, status: "CLAUDE_PROVIDER_NOT_CONFIGURED", message: "Anthropic API key not configured." };
-  const limit = checkLimits();
+  const estimatedTokens = estimateTokens(message);
+  const limit = checkLimits({ estimatedCost: estimateRequestCost("claude"), estimatedTokens });
   if (limit.blocked) return { ok: false, status: "LIMIT_REACHED", message: limit.reason };
-  if (estimateTokens(message) > 2000) return { ok: false, status: "LIMIT_REACHED", message: "Max tokens per request exceeded." };
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -183,8 +206,8 @@ async function callClaude(message) {
     const data = await res.json();
     if (!res.ok) return { ok: false, status: "CLAUDE_ERROR", message: data.error?.message || "Claude error." };
     const tokens = data.usage?.input_tokens + data.usage?.output_tokens || 0;
-    logConsumption({ provider: "claude", model: "claude-sonnet-4-5", tokens_used: tokens, cost_estimated: 0, call_type: "chat", approved_by: "chief_ui" });
-    return { ok: true, provider: "claude", model: "claude-sonnet-4-5", message: data.content[0].text };
+    logConsumption({ provider: "claude", model: "claude-sonnet-4-5", tokens_used: tokens, cost_estimated: 0, call_type: "chat", approved_by: "chief_ui", ...meta });
+    return { ok: true, provider: "claude", model: "claude-sonnet-4-5", message: data.content[0].text, cost_estimated: 0, warning: limit.warnings?.[0] };
   } catch (e) {
     return { ok: false, status: "CLAUDE_ERROR", message: e.message };
   }
@@ -211,46 +234,129 @@ function routeOllamaLocal() {
   };
 }
 
-function classifyRoute(message) {
-  const m = message.toLowerCase();
-  if (localRulesResponse(message)) return "local";
-  if (m.includes("privad") || m.includes("confidential") || m.includes("local")) return "ollama";
-  if (m.includes("batch") || m.includes("volume") || m.includes("clasifica") || m.includes("repetitivo")) return "gemini";
-  if (m.includes("analiza") || m.includes("analysis") || m.includes("estrategia") || m.includes("strategy")) return "openai";
-  return AI_PROVIDER === "none" ? "local" : AI_PROVIDER;
+function providerAvailable(provider) {
+  if (provider === "local") return true;
+  if (provider === "ollama") return !IS_VERCEL;
+  if (provider === "gemini") return Boolean(GEMINI_KEY);
+  if (provider === "openai") return Boolean(OPENAI_KEY);
+  if (provider === "claude") return Boolean(ANTHROPIC_KEY);
+  return false;
 }
 
-async function routeToAI(message, requestedModel) {
-  // Nivel 0 — reglas locales
-  const localResponse = localRulesResponse(message);
-  if (localResponse && !requestedModel) {
+function providerLevel(provider) {
+  if (provider === "local") return 0;
+  if (provider === "ollama") return 1;
+  if (provider === "gemini") return 2;
+  if (provider === "openai") return 3;
+  return 0;
+}
+
+function explicitClassification(provider) {
+  const normalized = provider === "local_rules" ? "local" : provider;
+  return {
+    level: providerLevel(normalized),
+    provider: normalized,
+    reason: `explicit provider: ${normalized}`,
+    cost_tier: normalized === "local" || normalized === "ollama" ? "free" : normalized === "gemini" ? "cheap" : "paid"
+  };
+}
+
+function chooseFallback(classification) {
+  if (providerAvailable(classification.provider)) return classification;
+  for (const provider of ROUTER_POLICY.fallback_chain || ["openai", "gemini", "ollama", "local"]) {
+    const level = providerLevel(provider);
+    if (level <= classification.level && providerAvailable(provider)) {
+      return {
+        level,
+        provider,
+        reason: `${classification.reason}; fallback from ${classification.provider} to ${provider}`,
+        cost_tier: provider === "local" || provider === "ollama" ? "free" : provider === "gemini" ? "cheap" : "paid"
+      };
+    }
+  }
+  return {
+    level: 0,
+    provider: "local",
+    reason: `${classification.reason}; no provider key available, forced local stub`,
+    cost_tier: "free"
+  };
+}
+
+function localRouterResult(message, classification) {
+  const response = localRulesResponse(message) || "Local rules handled this request. No API call executed.";
+  logConsumption({
+    provider: "local_rules",
+    model: "level0",
+    tokens_used: 0,
+    cost_estimated: 0,
+    call_type: "local_rule",
+    approved_by: "router",
+    level: 0,
+    classification_reason: classification.reason
+  });
+  return {
+    ok: true,
+    provider: "local_rules",
+    model: "level0",
+    level: 0,
+    classification_reason: classification.reason,
+    cost_estimated: 0,
+    message: response
+  };
+}
+
+async function routeToAI(message, requestedModel, options = {}) {
+  const shouldAuto = !requestedModel || requestedModel === "auto";
+  const initial = shouldAuto
+    ? classifyRequest(message, { policy: ROUTER_POLICY, sensitive: Boolean(options.sensitive) })
+    : explicitClassification(requestedModel);
+  const classification = chooseFallback(initial);
+
+  if (classification.provider === "local") return localRouterResult(message, classification);
+  if (classification.provider === "ollama") {
+    const result = routeOllamaLocal();
     logConsumption({
-      provider: "local_rules",
-      model: "level0",
+      provider: "ollama",
+      model: result.model || "local-private-stub",
       tokens_used: 0,
       cost_estimated: 0,
-      call_type: "local_rule",
-      approved_by: "router"
+      call_type: "local_provider_stub",
+      approved_by: "router",
+      level: 1,
+      classification_reason: classification.reason
     });
-    return { ok: true, provider: "local_rules", model: "level0", message: localResponse };
+    return { ...result, level: 1, classification_reason: classification.reason, cost_estimated: 0 };
   }
 
-  // Modelo explícito solicitado
-  if (requestedModel === "openai") return await callOpenAI(message);
-  if (requestedModel === "gemini") return await callGemini(message);
-  if (requestedModel === "claude") return await callClaude(message);
-  if (requestedModel === "ollama") return routeOllamaLocal();
+  const estimatedTokens = estimateTokens(message);
+  const estimatedCost = estimateRequestCost(classification.provider);
+  const guard = checkLimits({ estimatedCost, estimatedTokens });
+  if (guard.blocked) {
+    return {
+      ok: false,
+      status: "LIMIT_REACHED",
+      provider: classification.provider,
+      level: classification.level,
+      classification_reason: classification.reason,
+      cost_estimated: estimatedCost,
+      message: guard.reason
+    };
+  }
 
-  // Auto-routing por AI_PROVIDER
-  const routedModel = classifyRoute(message);
-  if (routedModel === "local") return { ok: true, provider: "local_rules", model: "level0", message: localRulesResponse(message) || "Local rule route active. No API call executed." };
-  if (routedModel === "ollama") return routeOllamaLocal();
-  if (routedModel === "openai") return await callOpenAI(message);
-  if (routedModel === "gemini") return await callGemini(message);
-  if (routedModel === "claude") return await callClaude(message);
+  const meta = { level: classification.level, classification_reason: classification.reason };
+  const result = classification.provider === "openai"
+    ? await callOpenAI(message, meta)
+    : classification.provider === "gemini"
+      ? await callGemini(message, meta)
+      : await callClaude(message, meta);
 
-  // Sin provider configurado
-  return { ok: false, status: "NO_PROVIDER_CONFIGURED", message: "No AI provider configured. Set AI_PROVIDER in environment. Claude Proxy available in v1.3+." };
+  return {
+    ...result,
+    level: classification.level,
+    classification_reason: classification.reason,
+    cost_estimated: result.cost_estimated ?? estimatedCost,
+    warning: result.warning || guard.warnings?.[0]
+  };
 }
 
 // ── In-memory logs ────────────────────────────────────────
@@ -351,7 +457,7 @@ async function router(req, res) {
       return;
     }
 
-    const result = await routeToAI(message, model || null);
+    const result = await routeToAI(message, model || null, { sensitive: Boolean(body.sensitive) });
     addLog("chat", { provider: result.provider, model: result.model, input: message.slice(0, 100) });
     send(res, result.ok ? 200 : 503, result, origin);
     return;

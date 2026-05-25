@@ -1,0 +1,24 @@
+{
+  "version": "v1.0",
+  "auto_routing": true,
+  "fallback_chain": ["openai", "gemini", "ollama", "local"],
+  "level_overrides": {
+    "force_local_if_no_key": true,
+    "max_level_without_approval": 2,
+    "level3_requires_explicit": false
+  },
+  "cost_guard": {
+    "check_before_call": true,
+    "block_if_daily_exceeded": true,
+    "block_if_monthly_exceeded": true,
+    "warn_at_80_percent": true
+  },
+  "classification_rules": {
+    "level0_max_chars": 20,
+    "level2_min_chars": 200,
+    "level3_min_chars": 500,
+    "level3_keywords": ["analizar", "analyze", "análisis", "arquitectura", "architecture", "código", "code", "debug", "decisión", "decision", "estrategia", "strategy", "comparar", "compare"],
+    "level2_keywords": ["resumen", "summary", "resumir", "reunión", "meeting", "minuta", "lista", "list", "enumerar", "traducir", "translate", "clasificar", "classify"],
+    "level0_keywords": ["status", "estado", "health", "version", "help", "ayuda", "who are you", "qué eres"]
+  }
+}

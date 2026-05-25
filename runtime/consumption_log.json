@@ -2,6 +2,50 @@
   "log": [
     {
       "approved_by": "router",
+      "provider": "ollama",
+      "model": "local-private-stub",
+      "tokens_used": 0,
+      "cost_estimated": 0,
+      "call_type": "local_provider_stub",
+      "level": 1,
+      "classification_reason": "volume/utility keyword; fallback from gemini to ollama",
+      "timestamp": "2026-05-25T02:16:15.989Z"
+    },
+    {
+      "approved_by": "router",
+      "provider": "ollama",
+      "model": "local-private-stub",
+      "tokens_used": 0,
+      "cost_estimated": 0,
+      "call_type": "local_provider_stub",
+      "level": 1,
+      "classification_reason": "sensitive request",
+      "timestamp": "2026-05-25T02:16:15.961Z"
+    },
+    {
+      "approved_by": "router",
+      "provider": "local_rules",
+      "model": "level0",
+      "tokens_used": 0,
+      "cost_estimated": 0,
+      "call_type": "local_rule",
+      "level": 0,
+      "classification_reason": "short request",
+      "timestamp": "2026-05-25T02:16:15.620Z"
+    },
+    {
+      "approved_by": "router",
+      "provider": "local_rules",
+      "model": "level0",
+      "tokens_used": 0,
+      "cost_estimated": 0,
+      "call_type": "local_rule",
+      "level": 0,
+      "classification_reason": "short request",
+      "timestamp": "2026-05-25T02:14:40.159Z"
+    },
+    {
+      "approved_by": "router",
       "provider": "local_rules",
       "model": "level0",
       "tokens_used": 0,
@@ -11,11 +55,11 @@
     }
   ],
   "summary": {
-    "total_calls": 1,
+    "total_calls": 5,
     "total_tokens": 0,
     "estimated_cost_usd": 0,
-    "calls_today": 1,
-    "last_updated": "2026-05-24T23:28:43.339Z"
+    "calls_today": 4,
+    "last_updated": "2026-05-25T02:16:15.989Z"
   },
   "limits": {
     "max_calls_per_day": 50,
