@@ -7,6 +7,7 @@ import EcosystemPanel from "./EcosystemPanel";
 import VoiceCompanion from "./VoiceCompanion";
 import PhotoPanel from "./PhotoPanel";
 import CostsDashboard from "./CostsDashboard";
+import NebulaOrb from "./NebulaOrb";
 
 const BACKEND_URL = "http://localhost:3001";
 const TOKEN = "ULTRON_LOCAL_OPERATOR_TOKEN";
@@ -531,6 +532,7 @@ const TABS = [
   { id: "voice", label: "VOICE", icon: "🥽" },
   { id: "photo", label: "PHOTO", icon: "📷" },
   { id: "costs", label: "COSTS", icon: "💰" },
+  { id: "orb", label: "ORB", icon: "🌌" },
   { id: "tools", label: "TOOLS", icon: "🔧" }
 ];
 
@@ -660,6 +662,17 @@ export default function UltronMobile() {
         {activeTab === "voice" && <VoiceCompanion onCommand={tab => setActiveTab(tab)} backendOnline={backendOnline} />}
         {activeTab === "photo" && <PhotoPanel backendOnline={backendOnline} />}
         {activeTab === "costs" && <CostsDashboard backendOnline={backendOnline} />}
+        {activeTab === "orb" && (
+          <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"20px 0" }}>
+            <NebulaOrb
+              listening={false}
+              onToggleListen={() => {}}
+              currentMessage={messages && messages.length > 0 ? messages[messages.length-1]?.text : ""}
+              activeModel={activeModel}
+              backendOnline={backendOnline}
+            />
+          </div>
+        )}
         {activeTab === "tools" && <ExternalToolsPanel />}
 
         {/* Footer */}
