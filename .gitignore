@@ -10,3 +10,27 @@ dist/
 npm-debug.log*
 .ultron-private-memory/
 runtime/*.local.json
+
+# ULTRON local memory guardrails
+memory/raw_input/*
+!memory/raw_input/.gitkeep
+
+memory/classified/*
+!memory/classified/.gitkeep
+
+memory/distilled_knowledge/*
+!memory/distilled_knowledge/.gitkeep
+
+memory/tasks/*
+!memory/tasks/.gitkeep
+
+memory/**/ULTRON_TEST.*
+memory/**/*ULTRON_TEST*
+
+runtime/session_state.json
+runtime/ultron.db
+runtime/ultron.db-shm
+runtime/ultron.db-wal
+
+workspace/ideas/
+install_mobile.js
