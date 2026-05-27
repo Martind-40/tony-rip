@@ -1,0 +1,8 @@
+{
+  "project": "ULTRON_NEGATIVE_TEST",
+  "source_type": "simulated_security_note",
+  "approval_simulated": false,
+  "contains_real_data": false,
+  "topic": "blocked-sensitive-intake",
+  "text": "CONFIDENTIAL simulated note for guardrail testing only. This fictional payload references .env and fake credentials such as ANTHROPIC_API_KEY=sk-ant-fake-test-key and OPENAI_API_KEY=sk-fake-test-key. These keys are nonfunctional examples created only to verify that ULTRON blocks credential-like content without human approval."
+}

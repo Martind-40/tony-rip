@@ -1,0 +1,8 @@
+{
+  "project": "ULTRON_TEST",
+  "source_type": "simulated_note",
+  "approval_simulated": true,
+  "contains_real_data": false,
+  "topic": "b2b-crm-dashboarding",
+  "text": "En una reunion simulada de mercadeo B2B se identifico que el CRM debe centralizar la trazabilidad de leads, oportunidades comerciales y reportes ejecutivos. Tambien se detecto que los dashboards deben separar indicadores de captacion, conversion, calidad del lead y seguimiento comercial. Decision: priorizar una vista ejecutiva con indicadores separados por etapa comercial. Task: crear una matriz de campos minimos para leads y oportunidades. Risk: mezclar calidad del lead con volumen de captacion puede ocultar problemas del embudo. Opportunity: reutilizar esta estructura como patron para otros equipos comerciales."
+}

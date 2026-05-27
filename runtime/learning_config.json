@@ -1,0 +1,49 @@
+{
+  "version": "1.0.0",
+  "mode": "ULTRON_LEARNING_LAYER_V1_LOCAL_ONLY",
+  "allowed_memory_paths": [
+    "memory/raw_input/",
+    "memory/classified/",
+    "memory/distilled_knowledge/",
+    "memory/tasks/",
+    "memory/learning_atoms.json",
+    "memory/knowledge_index.json"
+  ],
+  "blocked_patterns": [
+    ".env",
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "GEMINI_API_KEY",
+    "api_key",
+    "secret",
+    "password",
+    "private_key",
+    "-----BEGIN",
+    "token="
+  ],
+  "sensitivity_categories": [
+    "PUBLIC",
+    "INTERNAL",
+    "SENSITIVE",
+    "CONFIDENTIAL",
+    "PERSONAL",
+    "REUSABLE_KNOWLEDGE"
+  ],
+  "reuse_policy": {
+    "PUBLIC": "CAN_REUSE_WITH_ATTRIBUTION",
+    "INTERNAL": "LOCAL_REUSE_ONLY",
+    "SENSITIVE": "REDACT_AND_REQUIRE_HUMAN_REVIEW",
+    "CONFIDENTIAL": "DO_NOT_REUSE_WITHOUT_EXPLICIT_APPROVAL",
+    "PERSONAL": "MINIMIZE_AND_REDACT",
+    "REUSABLE_KNOWLEDGE": "CAN_REUSE_AS_DISTILLED_ATOMS"
+  },
+  "human_approval_required_for_sensitive_data": true,
+  "default_project_routes": {
+    "ultron": "memory/distilled_knowledge/",
+    "tasks": "memory/tasks/",
+    "review": "memory/classified/"
+  },
+  "external_apis_enabled": false,
+  "fine_tuning_enabled": false,
+  "raw_sensitive_storage_allowed": false
+}
