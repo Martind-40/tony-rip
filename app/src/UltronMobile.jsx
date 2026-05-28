@@ -161,7 +161,7 @@ function Row({ label,value,valueColor }) {
 }
 
 // ── ORB VIEW — pantalla principal ─────────────────────────
-function OrbView({ backendOnline, activeModel, lastMessage, listening, onToggleListen, onOpenContext, orbColor }) {
+function OrbView({ backendOnline, activeModel, lastMessage, listening, thinking, onToggleListen, onOpenContext, orbColor }) {
   const m = {
     pro:{hex:"#1e90ff",ring:"rgba(30,144,255,",status:"PRO BRAIN MODE",model:"GPT-4o / CLAUDE"},
     strategic:{hex:"#9b59b6",ring:"rgba(155,89,182,",status:"NEBULA PROTOCOL",model:"SONNET / GEMINI"},
@@ -198,8 +198,8 @@ function OrbView({ backendOnline, activeModel, lastMessage, listening, onToggleL
       {listening && <div style={{ marginTop:8 }}><Waveform active={listening} color={m.hex}/></div>}
 
       {/* Status */}
-      <div style={{ marginTop:16,fontSize:10,color:m.hex,fontFamily:C.fontMono,letterSpacing:"0.12em",animation:listening?"blink 0.8s infinite":"none" }}>
-        {listening?"● LISTENING...":"○ TAP ORB TO SPEAK"}
+      <div style={{ marginTop:16,fontSize:10,color:m.hex,fontFamily:C.fontMono,letterSpacing:"0.12em",animation:(listening||thinking)?"blink 0.8s infinite":"none" }}>
+        {listening?"● LISTENING...":thinking?"◈ PROCESSING...":"○ TAP ORB TO SPEAK"}
       </div>
       <div style={{ fontSize:8,color:"rgba(255,255,255,0.15)",fontFamily:C.fontMono,marginTop:4 }}>
         {m.model} — {m.status}
@@ -455,7 +455,44 @@ export default function UltronMobile() {
   const [listening, setListening] = useState(false);
   const [lastMessage, setLastMessage] = useState("");
   const [orbColor, setOrbColor] = useState("pro");
+  const [orbThinking, setOrbThinking] = useState(false);
   const recRef = useRef(null);
+  const orbSynthRef = useRef(null);
+
+  function orbSpeak(text) {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const clean = String(text||"").replace(/\[ACTION:[A-Z]+\]/g,"").trim().slice(0,400);
+    if (!clean) return;
+    const utt = new SpeechSynthesisUtterance(clean);
+    utt.pitch = 0.25; utt.rate = 0.88; utt.volume = 1; utt.lang = "es-MX";
+    const voices = window.speechSynthesis.getVoices();
+    const esVoice = voices.find(v => v.lang.startsWith("es")) || voices.find(v => v.lang.startsWith("en"));
+    if (esVoice) utt.voice = esVoice;
+    orbSynthRef.current = utt;
+    window.speechSynthesis.speak(utt);
+  }
+
+  async function orbSendMessage(text) {
+    if (!text || orbThinking) return;
+    setOrbThinking(true);
+    try {
+      if (backendOnline) {
+        const res = await fetch(`${BACKEND_URL}/api/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-ultron-token": TOKEN },
+          body: JSON.stringify({ message: text, model: activeModel !== "auto" ? activeModel : undefined })
+        });
+        const data = await res.json();
+        const reply = data.message || "Sin respuesta.";
+        setLastMessage(reply);
+        orbSpeak(reply);
+      } else {
+        orbSpeak("Backend offline. Inicia el servidor.");
+      }
+    } catch { orbSpeak("Error de conexión."); }
+    setOrbThinking(false);
+  }
 
   const checkHealth = useCallback(async () => {
     try {
@@ -472,10 +509,19 @@ export default function UltronMobile() {
     const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
     if (!SR) return;
     const rec = new SR(); rec.continuous=false; rec.interimResults=true; rec.lang="es-MX";
-    rec.onresult = e => setLastMessage(Array.from(e.results).map(r=>r[0].transcript).join(""));
-    rec.onend = () => setListening(false);
+    let finalText = "";
+    rec.onresult = e => {
+      const t = Array.from(e.results).map(r=>r[0].transcript).join("");
+      setLastMessage(t);
+      if (e.results[e.results.length-1].isFinal) finalText = t;
+    };
+    rec.onend = () => {
+      setListening(false);
+      if (finalText.trim()) orbSendMessage(finalText.trim());
+      finalText = "";
+    };
     recRef.current = rec;
-  }, []);
+  }, [backendOnline, activeModel, orbThinking]);
 
   // Detect orb color from last message
   useEffect(() => {
@@ -514,6 +560,7 @@ export default function UltronMobile() {
         activeModel={activeModel}
         lastMessage={lastMessage}
         listening={listening}
+        thinking={orbThinking}
         onToggleListen={toggleListen}
         onOpenContext={() => setView("context")}
         orbColor={orbColor}
