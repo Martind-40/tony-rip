@@ -2,5 +2,13 @@
   "framework": "vite",
   "installCommand": "npm install",
   "buildCommand": "npm run build",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/server/ultron-backend.cjs" }
+  ],
+  "functions": {
+    "server/ultron-backend.cjs": {
+      "runtime": "nodejs20.x"
+    }
+  }
 }
