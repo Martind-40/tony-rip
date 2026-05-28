@@ -267,6 +267,22 @@ function ContextView({ backendOnline, activeModel, setActiveModel, onCloseContex
     utt.rate = 0.88;
     utt.volume = 1;
     utt.lang = "es-MX";
+    // Preferir voz en español si está disponible
+    const voices = window.speechSynthesis.getVoices();
+    const esVoice = voices.find(v => v.lang.startsWith("es")) || voices.find(v => v.lang.startsWith("en"));
+    if (esVoice) utt.voice = esVoice;
+    synthRef.current = utt;
+    window.speechSynthesis.speak(utt);
+  }
+
+  function speak(text) {
+    if (!voiceOn) return;
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const clean = String(text||"").replace(/\[ACTION:[A-Z]+\]/g,"").trim().slice(0,400);
+    if (!clean) return;
+    const utt = new SpeechSynthesisUtterance(clean);
+    utt.pitch = 0.25; utt.rate = 0.88; utt.volume = 1; utt.lang = "es-MX";
     const voices = window.speechSynthesis.getVoices();
     const esVoice = voices.find(v => v.lang.startsWith("es")) || voices.find(v => v.lang.startsWith("en"));
     if (esVoice) utt.voice = esVoice;
@@ -326,7 +342,7 @@ function ContextView({ backendOnline, activeModel, setActiveModel, onCloseContex
         <button onClick={onCloseContext} style={{ background:"transparent",border:`0.5px solid rgba(255,255,255,0.08)`,borderRadius:20,padding:"4px 12px",color:"rgba(255,255,255,0.3)",fontFamily:C.fontMono,fontSize:9,cursor:"pointer",letterSpacing:"0.08em" }}>◎ ORB</button>
         <div style={{ fontSize:10,fontWeight:600,color:modeColor,letterSpacing:"0.15em",fontFamily:C.fontUI,textShadow:`0 0 10px ${modeColor}66` }}>ULTRON</div>
         <div style={{ display:"flex",gap:8,alignItems:"center" }}>
-          <button onClick={()=>{setVoiceOn(v=>!v);window.speechSynthesis&&window.speechSynthesis.cancel();}} style={{background:voiceOn?"rgba(30,144,255,0.1)":"transparent",border:"0.5px solid "+(voiceOn?modeColor:"#2a2a2a"),borderRadius:20,padding:"3px 10px",color:voiceOn?modeColor:"#333",fontFamily:C.fontMono,fontSize:8,cursor:"pointer"}}>{voiceOn?"🔊 VOZ":"🔇 MUTE"}</button>
+          <button onClick={()=>{ setVoiceOn(v=>!v); window.speechSynthesis?.cancel(); }} style={{ background:voiceOn?`rgba(30,144,255,0.1)`:"transparent",border:`0.5px solid ${voiceOn?modeColor:"#2a2a2a"}`,borderRadius:20,padding:"3px 10px",color:voiceOn?modeColor:"#333",fontFamily:C.fontMono,fontSize:8,cursor:"pointer",letterSpacing:"0.06em" }}>{voiceOn?"🔊 VOZ":"🔇 MUTE"}</button>
           <div style={{ width:5,height:5,borderRadius:"50%",background:backendOnline?modeColor:"#1e1e1e",animation:backendOnline?"pulse 2s infinite":"none",boxShadow:backendOnline?`0 0 5px ${modeColor}`:"none" }}/>
           <span style={{ fontSize:7,color:backendOnline?modeColor:"#1e1e1e",fontFamily:C.fontMono }}>{backendOnline?"ONLINE":"OFFLINE"}</span>
         </div>
@@ -370,6 +386,7 @@ function ContextView({ backendOnline, activeModel, setActiveModel, onCloseContex
                 <div style={{ fontSize:11,color:m.role==="user"?C.text:m.role==="action"?C.amber:m.role==="system"?"#333":"#999",lineHeight:1.6 }}>
                   {m.text}
                   {m.role==="ultron"&&<button onClick={()=>speak(m.text)} style={{marginLeft:6,fontSize:9,color:"#444",background:"transparent",border:"none",cursor:"pointer"}} title="Reproducir">🔊</button>}{m.tab&&<button onClick={()=>setActiveTab(m.tab)} style={{ marginLeft:8,fontSize:8,color:C.amber,background:"transparent",border:`0.5px solid ${C.amber}`,borderRadius:2,padding:"1px 5px",cursor:"pointer",fontFamily:C.fontMono }}>→ GO</button>}
+                  {m.role==="ultron"&&<button onClick={()=>speak(m.text)} style={{ marginLeft:8,fontSize:9,color:"#444",background:"transparent",border:"none",cursor:"pointer",padding:"0 2px" }} title="Reproducir">🔊</button>}
                 </div>
               </div>)}
               {loading&&<div style={{ fontSize:11,color:modeColor,fontFamily:C.fontMono }}>◀ ULTRON&gt; <span style={{ animation:"blink 0.7s infinite" }}>▋</span></div>}
