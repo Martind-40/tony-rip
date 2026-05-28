@@ -25,8 +25,8 @@ const BT_GLASSES = [
   { brand: "Any BT Headset", price: "$20+", mic: "✓", audio: "✓", note: "Use phone browser + headset." }
 ];
 
-const BACKEND_URL = "http://localhost:3001";
-const TOKEN = "ULTRON_LOCAL_OPERATOR_TOKEN";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || (import.meta.env.PROD ? "" : "http://localhost:3001");
+const TOKEN = import.meta.env.VITE_ULTRON_TOKEN || "ULTRON_LOCAL_OPERATOR_TOKEN";
 
 function authFetch(path, options = {}) {
   return fetch(`${BACKEND_URL}${path}`, {
